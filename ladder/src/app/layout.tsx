@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Team Random Selector",
-  description: "A fast and minimal web app to randomly pick a winner from a list.",
+  title: "뭐할까?",
+  description: "목록에서 무작위로 한 명을 선택하는 빠르고 심플한 웹 앱입니다.",
 };
 
 export const viewport: Viewport = {

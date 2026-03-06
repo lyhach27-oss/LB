@@ -125,15 +125,15 @@ export default function RandomSelector() {
             <div className="w-full md:w-1/3 flex flex-col gap-4">
                 <div className="bg-card glass shadow-xl rounded-2xl p-6 border border-border">
                     <h2 className="text-xl font-bold mb-4 flex items-center justify-between">
-                        Candidates
+                        참가자 목록
                         <span className="text-sm font-normal text-muted-foreground bg-secondary px-2 py-1 rounded-full">
-                            {items.length}
+                            {items.length} 명
                         </span>
                     </h2>
 
                     <textarea
                         className="w-full h-64 p-4 rounded-xl border border-border bg-background focus:ring-2 focus:ring-primary focus:outline-none resize-none transition-all"
-                        placeholder="Enter names separated by newlines or commas..."
+                        placeholder="이름이나 항목을 줄바꿈(Enter)이나 쉼표(,)로 구분해서 입력하세요..."
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
                     />
@@ -143,12 +143,12 @@ export default function RandomSelector() {
                             onClick={copyShareLink}
                             className="flex-1 flex items-center justify-center gap-2 bg-secondary/50 hover:bg-secondary text-foreground py-2 px-4 rounded-xl border border-border transition-colors text-sm font-medium"
                         >
-                            {copySuccess ? <span className="text-green-500 flex items-center gap-1">Copied!</span> : <><Copy size={16} /> Share Link</>}
+                            {copySuccess ? <span className="text-green-500 flex items-center gap-1">복사 완료!</span> : <><Copy size={16} /> 링크 복사하기</>}
                         </button>
                         <button
                             onClick={clearAll}
                             className="text-red-500 hover:bg-red-500/10 p-2 rounded-xl border border-border transition-colors"
-                            title="Clear All"
+                            title="모두 지우기"
                         >
                             <Trash2 size={16} />
                         </button>
@@ -184,8 +184,8 @@ export default function RandomSelector() {
                         onClick={drawWinner}
                         disabled={items.length === 0 || isDrawing}
                         className={`w-full py-4 rounded-2xl font-bold text-xl flex items-center justify-center gap-2 transition-all transform active:scale-95 ${items.length === 0 || isDrawing
-                                ? "bg-gray-300 dark:bg-gray-800 text-gray-500 cursor-not-allowed"
-                                : "bg-primary text-primary-foreground hover:bg-blue-700 shadow-lg hover:shadow-primary/25"
+                            ? "bg-gray-300 dark:bg-gray-800 text-gray-500 cursor-not-allowed"
+                            : "bg-primary text-primary-foreground hover:bg-blue-700 shadow-lg hover:shadow-primary/25"
                             }`}
                     >
                         {isDrawing ? (
@@ -196,7 +196,7 @@ export default function RandomSelector() {
                                 <RefreshCw size={24} />
                             </motion.div>
                         ) : (
-                            <><Play size={24} fill="currentColor" /> Draw Winner</>
+                            <><Play size={24} fill="currentColor" /> 추첨하기</>
                         )}
                     </button>
 
@@ -212,7 +212,7 @@ export default function RandomSelector() {
                                     onClick={removeWinner}
                                     className="w-full py-3 rounded-xl border-2 border-primary/20 hover:border-primary/50 text-foreground font-medium flex items-center justify-center gap-2 transition-colors bg-card"
                                 >
-                                    <X size={18} /> Exclude Winner & Recalculate
+                                    <X size={18} /> 뽑힌 사람 제외하고 진행
                                 </button>
                             </motion.div>
                         )}

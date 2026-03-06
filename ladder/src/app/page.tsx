@@ -13,10 +13,10 @@ export default function Home() {
             <Sparkles className="w-8 h-8 text-primary" />
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-foreground">
-            Team Random <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">Selector</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">뭐할까?</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto opacity-80">
-            A fast, beautiful, and fair way to pick a winner, decide who goes next, or choose the lunch menu.
+            당번을 정하거나, 점심 메뉴를 고르거나, 발표자를 빠르고 공정하게 뽑아보세요.
           </p>
         </div>
 
@@ -26,7 +26,7 @@ export default function Home() {
             <div className="w-full max-w-4xl mx-auto flex items-center justify-center min-h-[400px]">
               <div className="animate-pulse flex flex-col items-center">
                 <div className="w-12 h-12 rounded-full border-4 border-primary/30 border-t-primary animate-spin mb-4" />
-                <p className="text-muted-foreground">Loading selector...</p>
+                <p className="text-muted-foreground">선택기 로딩 중...</p>
               </div>
             </div>
           }>
@@ -39,7 +39,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="mt-16 text-center text-sm text-muted-foreground opacity-60 flex flex-col items-center gap-2">
         <p>Built with Next.js & Tailwind CSS.</p>
-        <p>Perfect for daily stand-ups and lunch menus.</p>
+        <p>팀 빌딩, 회식 메뉴 선정, 데일리 스탠드업에 유용하게 쓸 수 있습니다.</p>
       </footer>
     </div>
   );
