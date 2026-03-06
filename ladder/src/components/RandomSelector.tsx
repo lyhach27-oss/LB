@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { Copy, Plus, X, Play, RefreshCw, Trash2 } from "lucide-react";
+import { Copy, Plus, X, Play, RefreshCw, Trash2, Shuffle } from "lucide-react";
 
 export default function RandomSelector() {
     const router = useRouter();
@@ -119,6 +119,12 @@ export default function RandomSelector() {
         setCurrentSlot("?");
     };
 
+    const shuffleItems = () => {
+        if (items.length === 0) return;
+        const shuffled = [...items].sort(() => Math.random() - 0.5);
+        setInputText(shuffled.join("\n"));
+    };
+
     return (
         <div className="w-full max-w-4xl mx-auto flex flex-col md:flex-row gap-8">
             {/* Input Section */}
@@ -144,6 +150,13 @@ export default function RandomSelector() {
                             className="flex-1 flex items-center justify-center gap-2 bg-secondary/50 hover:bg-secondary text-foreground py-2 px-4 rounded-xl border border-border transition-colors text-sm font-medium"
                         >
                             {copySuccess ? <span className="text-green-500 flex items-center gap-1">복사 완료!</span> : <><Copy size={16} /> 링크 복사하기</>}
+                        </button>
+                        <button
+                            onClick={shuffleItems}
+                            className="bg-secondary/50 hover:bg-secondary text-foreground p-2 rounded-xl border border-border transition-colors"
+                            title="목록 섞기"
+                        >
+                            <Shuffle size={16} />
                         </button>
                         <button
                             onClick={clearAll}
