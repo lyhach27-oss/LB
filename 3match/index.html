@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Match 3 Playable Ad</title>
+</head>
+
+<body>
+  <div id="app">
+    <!-- HUD / Objectives -->
+    <div id="hud">
+      <div class="objective">
+        <span class="objective-icon red"></span>
+        <span id="objective-count">15</span>
+      </div>
+      <div class="moves-container">
+        <div class="moves-label">MOVES</div>
+        <div id="moves-count">5</div>
+      </div>
+    </div>
+
+    <!-- Narrative Danger Zone -->
+    <div id="danger-zone">
+      <div id="danger-rocks">🪨🪨🪨</div>
+      <div id="danger-character">🤴</div>
+    </div>
+
+    <!-- Game Board Container -->
+    <div id="board-container">
+      <div id="game-board"></div>
+    </div>
+
+    <!-- Tutorial Overlay (Hand animation) -->
+    <div id="tutorial-overlay" class="hidden">
+      <div id="tutorial-hand"></div>
+    </div>
+
+    <!-- End Card / Call to Action -->
+    <div id="end-card" class="hidden">
+      <h1 id="end-card-title">Great Job!</h1>
+      <button id="cta-button">PLAY NOW</button>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+
+</html>
