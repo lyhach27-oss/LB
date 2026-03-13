@@ -49,6 +49,9 @@ export default class GameScene extends Phaser.Scene {
         this.rt = this.add.renderTexture(0, 0, width, height);
 
         // Draw the dirty image perfectly overlaid onto the clean image location
+        // We have to account for the fact that the RenderTexture is positioned at 0, 0
+        // The image itself will be drawn AT its given coordinates, so we just use
+        // the same x and y as the cleanImage
         const tempDirty = this.make.image({
             x: width / 2 - 100,
             y: height / 2,
@@ -142,7 +145,7 @@ export default class GameScene extends Phaser.Scene {
             bg.fillRoundedRect(sidebarX - 45, y - 45, 90, 90, 20);
             bg.setDepth(-1);
 
-            const img = this.add.image(sidebarX, y, tool).setScale(0.5).setInteractive({ useHandCursor: true });
+            const img = this.add.image(sidebarX, y, tool).setScale(0.15).setInteractive({ useHandCursor: true });
 
             img.on('pointerdown', () => {
                 this.selectTool(tool);
