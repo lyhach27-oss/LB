@@ -1,7 +1,7 @@
 export const GameState = {
   config: {
-    rows: 7,
-    cols: 7,
+    rows: 10,
+    cols: 12,
     cellSize: 50, // will be calculate dynamically based on screen width
     cellGap: 5,
     colors: ['red', 'blue', 'green', 'yellow', 'purple'],

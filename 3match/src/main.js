@@ -1,4 +1,3 @@
-import './style.css';
 import { GameState } from './gameState.js';
 import { initBoard } from './gameBoard.js';
 import { showTutorial } from './tutorial.js';
