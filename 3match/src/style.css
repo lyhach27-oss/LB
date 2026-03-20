@@ -31,7 +31,7 @@ body {
   position: relative;
   overflow: hidden;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-  background: url('../assets/images/game_bg.svg') center / cover;
+  background: url('../assets/images/game_bg.png') repeat;
 }
 
 /* HUD System */
@@ -45,7 +45,7 @@ body {
 }
 
 .objective {
-  background: url('../assets/images/mission_bg.svg') center / contain no-repeat;
+  background: url('../assets/images/mission_bg.png') center / contain no-repeat;
   border: none;
   padding: 10px 30px;
   display: flex;
@@ -55,6 +55,7 @@ body {
   font-weight: bold;
   height: 60px;
   justify-content: center;
+  color: blue;
 }
 
 .objective-icon {
@@ -62,11 +63,11 @@ body {
   height: 30px;
   border-radius: 5px;
   display: inline-block;
-  box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.5);
+  /* box-shadow removed based on user feedback */
 }
 
 .moves-container {
-  background: url('../assets/images/turns_bg.svg') center / contain no-repeat;
+  background: url('../assets/images/turns_bg.png') center / contain no-repeat;
   border: none;
   border-radius: 0;
   width: 80px;
@@ -150,10 +151,8 @@ body {
   flex: 1;
   display: flex;
   justify-content: center;
-  align-items: flex-end;
-  /* Move board down */
-  padding: 5px;
-  padding-bottom: 30px;
+  align-items: center;
+  padding: 10px;
   min-height: 0;
   /* Important for flex children to shrink */
   overflow: hidden;
@@ -161,10 +160,9 @@ body {
 
 #game-board {
   position: relative;
-  background: rgba(0, 0, 0, 0.3);
+  background: transparent;
   border-radius: 12px;
   padding: 8px;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5), 0 5px 15px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-wrap: wrap;
   /* We'll set dimensions dynamically in JS based on grid size */
@@ -172,19 +170,21 @@ body {
 
 /* Individual Cell/Slot Background */
 .cell-bg {
-  background: rgba(255, 255, 255, 0.1);
+  background: black;
   border-radius: 8px;
   position: absolute;
+  opacity: 0.5;
 }
 
 /* The actual draggable block */
 .block {
   position: absolute;
+  top: 0;
+  left: 0;
   /* Using absolute positioning for animations */
   border-radius: 10px;
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: inset 0 4px 6px rgba(255, 255, 255, 0.6), 0 3px 6px rgba(0, 0, 0, 0.4), inset 0 -4px 6px rgba(0, 0, 0, 0.2);
   z-index: 2;
 }
 
@@ -195,23 +195,23 @@ body {
 
 /* Colors for Blocks */
 .red {
-  background: url('../assets/images/red.svg') center/cover no-repeat;
+  background: url('../assets/images/red.png') center/contain no-repeat;
 }
 
 .blue {
-  background: url('../assets/images/blue.svg') center/cover no-repeat;
+  background: url('../assets/images/blue.png') center/contain no-repeat;
 }
 
 .green {
-  background: url('../assets/images/green.svg') center/cover no-repeat;
+  background: url('../assets/images/green.png') center/contain no-repeat;
 }
 
 .yellow {
-  background: url('../assets/images/yellow.svg') center/cover no-repeat;
+  background: url('../assets/images/yellow.png') center/contain no-repeat;
 }
 
 .purple {
-  background: url('../assets/images/purple.svg') center/cover no-repeat;
+  background: url('../assets/images/purple.png') center/contain no-repeat;
 }
 
 /* Overlays */
@@ -298,7 +298,7 @@ body {
   position: absolute;
   width: 50px;
   height: 50px;
-  background: url('../assets/images/hand.svg') center/contain no-repeat;
+  background: url('../assets/images/hand.png') center/contain no-repeat;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
   /* Animation mapped dynamically via JS based on hint */
 }

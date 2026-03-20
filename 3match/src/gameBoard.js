@@ -8,8 +8,8 @@ export function initBoard() {
     // Calculate dynamic cell size based on container width and height
     const containerRect = container.getBoundingClientRect();
     // Use fallbacks in case layout hasn't fully applied yet
-    const availableWidth = Math.max(containerRect.width, 300) - 20; // minus padding
-    const availableHeight = Math.max(containerRect.height, 300) - 20;
+    const availableWidth = Math.max(containerRect.width, 300) - 40; // safe horizontal padding
+    const availableHeight = Math.max(containerRect.height, 300) - 60; // safe vertical padding to prevent overflow
 
     const maxCellWidth = Math.floor(availableWidth / GameState.config.cols);
     const maxCellHeight = Math.floor(availableHeight / GameState.config.rows);
@@ -33,10 +33,10 @@ export function initBoard() {
             // Draw background cell
             const bgCell = document.createElement('div');
             bgCell.className = 'cell-bg';
-            bgCell.style.width = `${cellSize}px`;
-            bgCell.style.height = `${cellSize}px`;
-            bgCell.style.left = `${c * (cellSize + gap) + gap}px`;
-            bgCell.style.top = `${r * (cellSize + gap) + gap}px`;
+            bgCell.style.width = `${cellSize + 2}px`;
+            bgCell.style.height = `${cellSize + 2}px`;
+            bgCell.style.left = `${c * (cellSize + gap) + gap - 1}px`;
+            bgCell.style.top = `${r * (cellSize + gap) + gap - 1}px`;
             boardEl.appendChild(bgCell);
 
             // Spawn actual block
