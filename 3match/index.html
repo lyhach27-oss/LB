@@ -15,7 +15,17 @@
     </div>
 
     <!-- Physics Simulation Area -->
-    <div id="physics-container"></div>
+    <div id="physics-container">
+      <div id="defender" style="position: absolute; z-index: 200;">
+        🧍‍♂️
+        <!-- Circular Health Gauge -->
+        <svg id="health-ring" width="50" height="50" style="position:absolute; top:-60px; left:50%; transform:translateX(-50%); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+            <circle cx="25" cy="25" r="20" fill="white" stroke="#333" stroke-width="3" />
+            <circle id="health-arc" cx="25" cy="25" r="20" fill="none" stroke="#ff0000" stroke-width="5" stroke-dasharray="125.6" stroke-dashoffset="0" style="transition: stroke-dashoffset 0.1s linear; transform: rotate(-90deg); transform-origin: 50% 50%;" />
+            <text x="25" y="32" font-size="20" text-anchor="middle">💪</text>
+        </svg>
+      </div>
+    </div>
 
     <!-- Game Board Container -->
     <div id="board-container">
@@ -32,6 +42,25 @@
       <h1 id="end-card-title">Great Job!</h1>
       <button id="cta-button">PLAY NOW</button>
     </div>
+
+    <!-- Game Over App Store Modal -->
+    <div id="game-over-modal" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
+      <h1 style="color: #ff4b2b; font-size: 3.5rem; text-shadow: 0 4px 15px rgba(255, 75, 43, 0.6); text-align: center; margin-bottom: 10px;">GAME OVER</h1>
+      <p style="color: white; font-size: 1.3rem; margin-bottom: 40px; text-align: center; padding: 0 20px;">The balls crushed the defender!</p>
+      <a href="#" onclick="alert('Redirecting to App Store...'); return false;" style="background: linear-gradient(135deg, #ff416c, #ff4b2b); color: white; padding: 18px 50px; border-radius: 40px; text-decoration: none; font-size: 1.6rem; font-weight: 900; box-shadow: 0 6px 20px rgba(255, 75, 43, 0.5); text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s;">
+        DOWNLOAD NOW
+      </a>
+    </div>
+
+    <!-- Game Clear App Store Modal -->
+    <div id="game-clear-modal" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 1000; justify-content: center; align-items: center; flex-direction: column;">
+      <h1 style="color: #00e676; font-size: 3.5rem; text-shadow: 0 4px 15px rgba(0, 230, 118, 0.6); text-align: center; margin-bottom: 10px;">SUCCESS!</h1>
+      <p style="color: white; font-size: 1.3rem; margin-bottom: 40px; text-align: center; padding: 0 20px;">You defended the puzzle successfully!</p>
+      <a href="#" onclick="alert('Redirecting to App Store...'); return false;" style="background: linear-gradient(135deg, #00e676, #00c853); color: white; padding: 18px 50px; border-radius: 40px; text-decoration: none; font-size: 1.6rem; font-weight: 900; box-shadow: 0 6px 20px rgba(0, 230, 118, 0.5); text-transform: uppercase; letter-spacing: 1px; transition: transform 0.2s;">
+        DOWNLOAD NOW
+      </a>
+    </div>
+
   </div>
 
   <script type="module" src="/src/main.js"></script>

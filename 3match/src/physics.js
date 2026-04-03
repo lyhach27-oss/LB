@@ -1,38 +1,47 @@
 import Matter from 'matter-js';
 import { levels } from './levelConfig.js';
 
-const { Engine, Render, Runner, World, Bodies, Body, Events } = Matter;
+const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
 
 let engine;
 let render;
 let runner;
 let balls = [];
-const MAX_BALLS = 150;
+const MAX_BALLS = 180;
 
 export let doorObj = null;
+export let floorPlatform = null;
 let isGameOver = false;
+let isGameClear = false;
+export const puzzleBodies = {};
 
-// Set up single instance of defense
+export let canvasW = 500;
+export let canvasH = 900;
+let smoothedVelocity = 0;
+let ballsSpawned = 0;
+const TOTAL_BALLS = 220;
+let ballSpawnInterval;
+
 export function initPhysics(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
+    canvasW = container.clientWidth;
+    canvasH = container.clientHeight;
+
     engine = Engine.create();
     
-    // Canvas set to top 50% logical size 500x450
+    // Canvas strictly exactly 1:1 view
     render = Render.create({
         element: container,
         engine: engine,
         options: {
-            width: 500,
-            height: 450,
+            width: canvasW,
+            height: canvasH,
             wireframes: false,
             background: 'transparent'
         }
     });
-
-    render.canvas.style.width = '100%';
-    render.canvas.style.height = '100%';
 
     Render.run(render);
     
@@ -40,27 +49,113 @@ export function initPhysics(containerId) {
     Runner.run(runner, engine);
 
     setupGameLoop();
-    startSpawner();
+    
+    ballsSpawned = 0;
+
+    // Ball Spawner
+    ballSpawnInterval = setInterval(() => {
+        if (isGameOver || isGameClear || ballsSpawned >= TOTAL_BALLS) {
+            if (ballsSpawned >= TOTAL_BALLS) clearInterval(ballSpawnInterval);
+            return;
+        }
+
+        for (let i = 0; i < 2; i++) {
+            const x = (50 + Math.random() * 100) * (canvasW/500);
+            const y = -20 - Math.random() * 20;
+            createBall(x, y);
+        }
+    }, 400); 
 }
 
 function setupGameLoop() {
     Events.on(engine, 'beforeUpdate', () => {
-        if (isGameOver || !doorObj) return;
+        if (isGameOver || !doorObj || !floorPlatform) return;
 
-        // Force door to stay on Y axis
-        Body.setPosition(doorObj, { x: doorObj.position.x, y: 400 });
+        // Apply natural leftward force simulating the defender pushing back
+        // Adjusted for heavier door mass
+        Body.applyForce(doorObj, doorObj.position, { x: -0.15, y: 0 }); 
+
+        let boardTopPx = canvasH * 0.5;
+        let boardRightPx = canvasW;
+        const board = document.getElementById('game-board');
+        if (board && board.offsetHeight > 0) {
+            const rect = board.getBoundingClientRect();
+            boardTopPx = rect.top;
+            boardRightPx = rect.right;
+        }
+
+        const baselineX = canvasW * 0.5; // ~50% across the screen (Moved from 70%)
+        // Floor platform is 10px high sitting on top of board. Door sits on top of platform.
+        const doorY = boardTopPx - 60;
+
+        // Force door to stay on Y axis right above the board and securely upright
+        Body.setPosition(doorObj, { x: doorObj.position.x, y: doorY });
         Body.setVelocity(doorObj, { x: doorObj.velocity.x, y: 0 });
+        Body.setAngle(doorObj, 0);
+        Body.setAngularVelocity(doorObj, 0);
 
-        // Prevent door from going too far left
-        if (doorObj.position.x < 250) {
-            Body.setPosition(doorObj, { x: 250, y: 400 });
+        // Dynamically keep the floor perfectly synced right beneath door
+        const platformW = canvasW; 
+        const platformX = baselineX + platformW / 2;
+        const platformY = boardTopPx - 5;
+        Body.setPosition(floorPlatform, { x: platformX, y: platformY });
+
+        // Prevent door from pushing *too* far left past its baseline
+        if (doorObj.position.x < baselineX) {
+            Body.setPosition(doorObj, { x: baselineX, y: doorY });
             Body.setVelocity(doorObj, { x: 0, y: 0 });
         }
 
-        // Game Over logic (Balls pushed the door too far right)
-        if (doorObj.position.x > 450) {
-            isGameOver = true;
-            alert('Game Over! The door was breached.');
+        // Game Over & Health Logic
+        const deathThresholdX = boardRightPx - 12; 
+        const totalDist = deathThresholdX - baselineX;
+        let currentDist = doorObj.position.x - baselineX;
+        if(currentDist < 0) currentDist = 0;
+
+        let dangerRatio = currentDist / totalDist;
+        if(dangerRatio > 1) dangerRatio = 1;
+        
+        const healthArc = document.getElementById('health-arc');
+        if (healthArc) {
+            const circumference = 125.6;
+            // When danger=0 (offset=0, full ring). When danger=1 (offset=125.6, empty ring).
+            healthArc.style.strokeDashoffset = circumference * dangerRatio;
+        }
+
+        if (doorObj.position.x >= deathThresholdX) {
+            if (!isGameOver && !isGameClear) {
+                isGameOver = true;
+                const defender = document.getElementById('defender');
+                if(defender) defender.childNodes[0].nodeValue = '💀';
+                
+                const modal = document.getElementById('game-over-modal');
+                if (modal) modal.style.display = 'flex';
+            }
+        }
+
+        // Visual Sync for Defender Emoji based on Door position
+        const defender = document.getElementById('defender');
+        if (defender) {
+            const doorRightPx = doorObj.position.x + 10; 
+            const doorTopPx = doorY - 55; // Sit on the exact logical unit
+            defender.style.transform = `translate(${doorRightPx}px, ${doorTopPx}px)`;
+        }
+
+        // Win Condition logic
+        let activeBalls = 0;
+        Composite.allBodies(engine.world).forEach(body => {
+            if (body.label === 'ball') activeBalls++;
+            
+            // Clean up bodies that fall out of bounds
+            if (body.position.y > canvasH + 100) {
+                World.remove(engine.world, body);
+            }
+        });
+
+        if (ballsSpawned >= TOTAL_BALLS && activeBalls === 0 && !isGameOver && !isGameClear) {
+            isGameClear = true;
+            const clearModal = document.getElementById('game-clear-modal');
+            if (clearModal) clearModal.style.display = 'flex';
         }
     });
 }
@@ -73,9 +168,10 @@ export function loadLevel(levelName) {
     World.clear(engine.world);
     Engine.clear(engine);
 
-    // Add walls
+    // Add visual funnel scaling to 1:1
+    const sX = canvasW / 500;
     levelData.forEach(wall => {
-        const staticBody = Bodies.rectangle(wall.x, wall.y, wall.width, wall.height, {
+        const staticBody = Bodies.rectangle(wall.x * sX, wall.y, wall.width * sX, wall.height, {
             isStatic: true,
             angle: wall.angle,
             render: { fillStyle: '#ffaa00' }
@@ -83,51 +179,102 @@ export function loadLevel(levelName) {
         World.add(engine.world, staticBody);
     });
 
-    // The Defense Door
-    doorObj = Bodies.rectangle(350, 400, 20, 100, {
+    const baselineX = canvasW * 0.5;
+    let boardTopPx = canvasH * 0.5;
+    const board = document.getElementById('game-board');
+    if (board && board.offsetHeight > 0) {
+        boardTopPx = board.getBoundingClientRect().top;
+    }
+    
+    // Create the standing platform exactly on top of the puzzle roof
+    const platformW = canvasW; 
+    const platformX = baselineX + platformW / 2; // stretches infinitely to the right
+    const platformY = boardTopPx - 5; // 10px high, hugs exactly the roof
+    floorPlatform = Bodies.rectangle(platformX, platformY, platformW, 10, {
+        isStatic: true,
+        render: { fillStyle: '#ffaa00' } // Matching the wall aesthetics
+    });
+
+    const doorY = boardTopPx - 60; // 50px (half door) + 10px (platform thickness)
+    
+    doorObj = Bodies.rectangle(baselineX, doorY, 20, 100, {
         isStatic: false,
-        mass: 300, 
+        mass: 1000, // Significantly heavier to act as an anchor against stacking balls
         frictionAir: 0.1,
+        inertia: Infinity, // Prevents spinning!
         render: { fillStyle: '#a30000' }
     });
 
-    // Floor boundary exactly under the door to let balls funnel onto door
-    const floor = Bodies.rectangle(250, 460, 500, 20, { isStatic: true });
-
-    World.add(engine.world, [doorObj, floor]);
+    World.add(engine.world, [doorObj, floorPlatform]);
     balls = [];
     isGameOver = false;
+    isGameClear = false;
+    ballsSpawned = 0;
 }
 
-function startSpawner() {
-    setInterval(() => {
-        if (!engine || isGameOver) return;
-        
-        if (balls.length >= MAX_BALLS) {
-            const oldBall = balls.shift();
-            World.remove(engine.world, oldBall);
-        }
+export function createPuzzleBlock(id, x, y, width, height) {
+    if (!engine) return;
+    const body = Bodies.rectangle(x, y, width - 2, height - 2, {
+        isStatic: true, 
+        render: { visible: false }
+    });
 
-        // Flood drop balls
-        for (let i = 0; i < 2; i++) {
-            const radius = Math.random() * 5 + 10;
-            const x = 50 + Math.random() * 50; 
-            const y = -20 - Math.random() * 20;
-            const ball = Bodies.circle(x, y, radius, {
-                restitution: 0.4,
-                density: 0.05, 
-                render: { fillStyle: ['#4287f5', '#f54242', '#42f566', '#f5d142'][Math.floor(Math.random()*4)] }
-            });
-            balls.push(ball);
-            World.add(engine.world, ball);
-        }
-    }, 500); // Very frequent dropping
+    puzzleBodies[id] = body;
+    World.add(engine.world, body);
 }
 
-export function pushDoor(comboCount) {
-    if (!doorObj || isGameOver) return;
+export function removePuzzleBlocks(ids) {
+    if (!engine) return;
+    ids.forEach(id => {
+        const body = puzzleBodies[id];
+        if (body) {
+            World.remove(engine.world, body);
+            delete puzzleBodies[id];
+        }
+    });
+}
+
+export function movePuzzleBlock(id, x, y) {
+    const body = puzzleBodies[id];
+    if (body) {
+        Body.setPosition(body, { x, y });
+    }
+}
+
+export function createSideWall(x, y, w, h) {
+    if (!engine) return;
+    const body = Bodies.rectangle(x, y, w, h, {
+        isStatic: true,
+        render: { fillStyle: '#ffaa00' } 
+    });
+    World.add(engine.world, body);
+}
+
+export function createBall(x, y) {
+    if (!engine) return;
+
+    ballsSpawned++;
+
+    const scale = (canvasW / 500);
     
-    // Push the door leftwards dramatically proportional to combo items destroyed
-    const force = 10 * comboCount;
-    Body.applyForce(doorObj, doorObj.position, { x: -force, y: 0 });
+    // Slight randomization sizes
+    if (Math.random() < 0.3) {
+        const ball = Bodies.circle(x, y, scale * 6, { 
+            restitution: 0.2, 
+            density: 0.1, 
+            label: 'ball',
+            render: { fillStyle: '#ffeb3b', lineWidth: 1, strokeStyle: '#000' }
+        });
+        Body.setVelocity(ball, {x: 0, y: 10});
+        World.add(engine.world, ball);
+    } else {
+        const ball = Bodies.circle(x, y, scale * 10, {
+            restitution: 0.2,
+            density: 0.15,
+            label: 'ball',
+            render: { fillStyle: ['#4287f5', '#f54242', '#42f566', '#f5d142'][Math.floor(Math.random()*4)], lineWidth: 1, strokeStyle: '#000' }
+        });
+        Body.setVelocity(ball, {x: 0, y: 10});
+        World.add(engine.world, ball);
+    }
 }

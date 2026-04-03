@@ -1,6 +1,6 @@
 import { GameState } from './gameState.js';
 import { setBlockPosition, spawnRawBlock } from './gameBoard.js';
-import { pushDoor } from './physics.js';
+import { removePuzzleBlocks } from './physics.js';
 
 export function handleInputSwap(r, c, dirX, dirY) {
     if (GameState.isInputLocked) return;
@@ -15,6 +15,9 @@ export function handleInputSwap(r, c, dirX, dirY) {
 
 async function handleSwap(r1, c1, r2, c2) {
     if (r2 < 0 || r2 >= GameState.config.rows || c2 < 0 || c2 >= GameState.config.cols) return;
+    
+    // Prevent dragging to/from an empty permanent hole
+    if (!GameState.board[r1][c1] || !GameState.board[r2][c2]) return;
 
     GameState.isInputLocked = true;
 
@@ -86,71 +89,25 @@ function findMatches() {
 }
 
 async function processMatches(matches) {
+    const deletePhysicsIds = [];
+
     // 1. Remove blocks via CSS animation
     matches.forEach(m => {
         let block = GameState.board[m.r][m.c];
         if (block && block.element) {
+            deletePhysicsIds.push(block.id);
             block.element.style.transform = `${block.element.style.transform} scale(0)`;
             setTimeout(() => { if (block.element.parentNode) block.element.remove(); }, 200);
             GameState.board[m.r][m.c] = null;
         }
     });
 
-    // 🌶️ PUSH THE DEFENSE DOOR!
-    pushDoor(matches.length);
+    // Open holes in physics layer draining balls
+    removePuzzleBlocks(deletePhysicsIds);
 
     await sleep(200);
 
-    // 2. Gravity (Fall down) 
-    let moved = false;
-    for (let c = 0; c < GameState.config.cols; c++) {
-        let emptySlots = 0;
-        for (let r = GameState.config.rows - 1; r >= 0; r--) {
-            if (!GameState.board[r][c]) {
-                emptySlots++;
-            } else if (emptySlots > 0) {
-                GameState.board[r + emptySlots][c] = GameState.board[r][c];
-                GameState.board[r][c] = null;
-                setBlockPosition(GameState.board[r + emptySlots][c].element, r + emptySlots, c);
-                moved = true;
-            }
-        }
-
-        // 3. Spawning
-        for (let i = 0; i < emptySlots; i++) {
-            const colors = GameState.config.colors;
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            
-            const gap = GameState.config.cellGap;
-            const cellSize = GameState.config.cellSize;
-            
-            // Generate DOM and place artificially high
-            const block = spawnRawBlock(i, c, color, Math.random().toString(36).substr(2, 9));
-            block.style.transform = `translate(${c * (cellSize + gap) + gap}px, -200px)`;
-
-            GameState.board[i][c] = {
-                id: block.dataset.id,
-                color: color,
-                element: block
-            };
-            
-            // Trigger reflow
-            block.offsetHeight;
-            setBlockPosition(block, i, c);
-            
-            moved = true;
-        }
-    }
-
-    if (moved) await sleep(200);
-
-    // 4. Check Cascades
-    const newMatches = findMatches();
-    if (newMatches.length > 0) {
-        await processMatches(newMatches);
-    } else {
-        GameState.isInputLocked = false;
-    }
+    GameState.isInputLocked = false;
 }
 
 function sleep(ms) {
