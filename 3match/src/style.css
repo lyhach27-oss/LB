@@ -92,58 +92,14 @@ body {
   line-height: 1;
 }
 
-/* Narrative Danger Zone */
-#danger-zone {
+/* Physics Area */
+#physics-container {
   width: 100%;
   flex: 1;
   position: relative;
-  background: rgba(0, 0, 0, 0.5);
-  border-top: 2px solid #555;
-  border-bottom: 2px solid #555;
   overflow: hidden;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-#danger-rocks {
-  font-size: 40px;
-  position: absolute;
-  top: -20px;
-  /* Hidden slightly above */
-  transition: transform 0.5s ease;
-  z-index: 2;
-  text-shadow: 0 5px 10px rgba(0, 0, 0, 1);
-}
-
-#danger-character {
-  font-size: 50px;
-  position: absolute;
-  bottom: 5px;
-  transition: transform 0.5s ease, filter 0.5s ease;
-  z-index: 1;
-  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.8));
-}
-
-.character-saved {
-  animation: jumpJoy 1s infinite alternate;
-}
-
-.character-crushed {
-  transform: scaleY(0.2) translateY(50px) !important;
-  filter: grayscale(100%);
-}
-
-@keyframes jumpJoy {
-  0% {
-    transform: translateY(0);
-  }
-
-  100% {
-    transform: translateY(-20px);
-  }
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 2px solid #555;
 }
 
 /* Board */
@@ -154,7 +110,6 @@ body {
   align-items: center;
   padding: 10px;
   min-height: 0;
-  /* Important for flex children to shrink */
   overflow: hidden;
 }
 
@@ -165,7 +120,6 @@ body {
   padding: 8px;
   display: flex;
   flex-wrap: wrap;
-  /* We'll set dimensions dynamically in JS based on grid size */
 }
 
 /* Individual Cell/Slot Background */
@@ -181,7 +135,6 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  /* Using absolute positioning for animations */
   border-radius: 10px;
   cursor: pointer;
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -194,25 +147,11 @@ body {
 }
 
 /* Colors for Blocks */
-.red {
-  background: url('../assets/images/red.png') center/contain no-repeat;
-}
-
-.blue {
-  background: url('../assets/images/blue.png') center/contain no-repeat;
-}
-
-.green {
-  background: url('../assets/images/green.png') center/contain no-repeat;
-}
-
-.yellow {
-  background: url('../assets/images/yellow.png') center/contain no-repeat;
-}
-
-.purple {
-  background: url('../assets/images/purple.png') center/contain no-repeat;
-}
+.red { background: url('../assets/images/red.png') center/contain no-repeat; }
+.blue { background: url('../assets/images/blue.png') center/contain no-repeat; }
+.green { background: url('../assets/images/green.png') center/contain no-repeat; }
+.yellow { background: url('../assets/images/yellow.png') center/contain no-repeat; }
+.purple { background: url('../assets/images/purple.png') center/contain no-repeat; }
 
 /* Overlays */
 .hidden {

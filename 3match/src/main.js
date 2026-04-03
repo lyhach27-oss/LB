@@ -1,7 +1,7 @@
 import { GameState } from './gameState.js';
 import { initBoard } from './gameBoard.js';
 import { showTutorial } from './tutorial.js';
-
+import { initPhysics, loadLevel } from './physics.js';
 
 function initGame() {
   // Set Objective Icon color
@@ -13,12 +13,15 @@ function initGame() {
   GameState.init();
   GameState.updateHUD();
 
+  initPhysics('physics-container');
+  loadLevel('zigzag');
+  
   initBoard();
 
   // Show tutorial shortly after board init
   setTimeout(() => {
     showTutorial();
-  }, 500);
+  }, 1000);
 
   // Handle resize nicely (for Playable ad responsiveness)
   window.addEventListener('resize', () => {
@@ -41,4 +44,4 @@ function initGame() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', initGame);
+initGame();

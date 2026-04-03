@@ -1,5 +1,5 @@
 import { GameState } from './gameState.js';
-import { setBlockPosition } from './gameBoard.js';
+import { getPhysicalPos } from './gameBoard.js';
 
 export function showTutorial() {
     const overlay = document.getElementById('tutorial-overlay');
@@ -13,30 +13,29 @@ export function showTutorial() {
     if (hint) {
         const { r1, c1, r2, c2 } = hint;
 
-        const cellSize = GameState.config.cellSize;
-        const gap = GameState.config.cellGap;
-
-        // [손가락 위치 기준점 가이드]
-        // 손가락 이미지(50x50) 안에서 '실제로 패를 가리키는 검지손가락 끝부분'이 
-        // 이미지의 좌상단(0,0)으로부터 가로/세로로 몇 px 떨어져 있는지를 -값으로 넣으시면 완벽하게 맞습니다!
-        // 예: 검지손가락 끝이 원본 이미지 기준 X: 15px, Y: 10px 지점이라면 -15, -10 적용.
         const HAND_OFFSET_X = -15; 
         const HAND_OFFSET_Y = -10;
 
-        // Calculate pixel positions
-        const startX = c1 * (cellSize + gap) + gap + (cellSize / 2) + HAND_OFFSET_X;
-        const startY = r1 * (cellSize + gap) + gap + (cellSize / 2) + HAND_OFFSET_Y;
+        const pos1 = getPhysicalPos(r1, c1);
+        const pos2 = getPhysicalPos(r2, c2);
 
-        const endX = c2 * (cellSize + gap) + gap + (cellSize / 2) + HAND_OFFSET_X;
-        const endY = r2 * (cellSize + gap) + gap + (cellSize / 2) + HAND_OFFSET_Y;
+        const container = document.getElementById('physics-container');
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        
+        // Match-3 uses logical 500x900
+        const scaleX = rect.width / 500;
+        const scaleY = rect.height / 900;
 
-        // Map overlay to the board container
-        const board = document.getElementById('game-board');
-        const boardRect = board.getBoundingClientRect();
+        const startX = pos1.x * scaleX + rect.left + HAND_OFFSET_X;
+        const startY = pos1.y * scaleY + rect.top + HAND_OFFSET_Y;
+
+        const endX = pos2.x * scaleX + rect.left + HAND_OFFSET_X;
+        const endY = pos2.y * scaleY + rect.top + HAND_OFFSET_Y;
+
         const appRect = document.getElementById('app').getBoundingClientRect();
-
-        const offsetX = boardRect.left - appRect.left;
-        const offsetY = boardRect.top - appRect.top;
+        const offsetX = -appRect.left;
+        const offsetY = -appRect.top;
 
         const css = `
       @keyframes tutorialSwipe {

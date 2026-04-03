@@ -1,95 +1,135 @@
 import { GameState } from './gameState.js';
-import { setupInputHandlers } from './matchLogic.js';
+import { handleInputSwap } from './matchLogic.js';
+
+let draggedBlock = null;
+let startX = 0, startY = 0;
 
 export function initBoard() {
-    const container = document.getElementById('board-container');
-    const boardEl = document.getElementById('game-board');
+    const board = document.getElementById('game-board');
+    if (!board) return;
 
-    // Calculate dynamic cell size based on container width and height
-    const containerRect = container.getBoundingClientRect();
-    // Use fallbacks in case layout hasn't fully applied yet
-    const availableWidth = Math.max(containerRect.width, 300) - 40; // safe horizontal padding
-    const availableHeight = Math.max(containerRect.height, 300) - 60; // safe vertical padding to prevent overflow
-
-    const maxCellWidth = Math.floor(availableWidth / GameState.config.cols);
-    const maxCellHeight = Math.floor(availableHeight / GameState.config.rows);
-
-    let calculatedSize = Math.min(maxCellWidth, maxCellHeight, 60) - GameState.config.cellGap;
-    GameState.config.cellSize = Math.max(20, calculatedSize); // Prevent too small or negative sizes
-    const cellSize = GameState.config.cellSize;
+    // Use available screen width but bound it
+    const containerWidth = Math.min(window.innerWidth, 500);
     const gap = GameState.config.cellGap;
+    const cols = GameState.config.cols;
+    const rows = GameState.config.rows;
+    
+    GameState.config.cellSize = Math.floor((containerWidth - gap * (cols + 1)) / cols);
+    const cellSize = GameState.config.cellSize;
 
-    boardEl.style.width = `${(cellSize + gap) * GameState.config.cols + gap}px`;
-    boardEl.style.height = `${(cellSize + gap) * GameState.config.rows + gap}px`;
-    boardEl.innerHTML = '';
+    board.style.width = `${cols * (cellSize + gap) + gap}px`;
+    board.style.height = `${rows * (cellSize + gap) + gap}px`;
+    board.innerHTML = '';
 
-    GameState.board = Array.from({ length: GameState.config.rows }, () =>
-        Array(GameState.config.cols).fill(null)
-    );
+    GameState.board = Array.from({ length: rows }, () => Array(cols).fill(null));
 
-    // Generate initial board (preventing initial matches)
-    for (let r = 0; r < GameState.config.rows; r++) {
-        for (let c = 0; c < GameState.config.cols; c++) {
-            // Draw background cell
-            const bgCell = document.createElement('div');
-            bgCell.className = 'cell-bg';
-            bgCell.style.width = `${cellSize + 2}px`;
-            bgCell.style.height = `${cellSize + 2}px`;
-            bgCell.style.left = `${c * (cellSize + gap) + gap - 1}px`;
-            bgCell.style.top = `${r * (cellSize + gap) + gap - 1}px`;
-            boardEl.appendChild(bgCell);
+    // Cells
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const bg = document.createElement('div');
+            bg.className = 'cell-bg';
+            bg.style.width = `${cellSize}px`;
+            bg.style.height = `${cellSize}px`;
+            bg.style.left = `${c * (cellSize + gap) + gap}px`;
+            bg.style.top = `${r * (cellSize + gap) + gap}px`;
+            board.appendChild(bg);
+        }
+    }
 
-            // Spawn actual block
-            spawnBlock(r, c);
+    // Blocks
+    let blockIdCounter = 0;
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            let colors = [...GameState.config.colors];
+            // Prevent initial matches
+            if (c >= 2 && GameState.board[r][c - 1]?.color === GameState.board[r][c - 2]?.color) {
+                colors = colors.filter(color => color !== GameState.board[r][c - 1].color);
+            }
+            if (r >= 2 && GameState.board[r - 1][c]?.color === GameState.board[r - 2][c]?.color) {
+                colors = colors.filter(color => color !== GameState.board[r - 1][c].color);
+            }
+
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const block = spawnRawBlock(r, c, color, blockIdCounter++);
+            
+            GameState.board[r][c] = {
+                id: block.dataset.id,
+                color: color,
+                element: block
+            };
+            setBlockPosition(block, r, c);
         }
     }
 }
 
-function spawnBlock(r, c) {
-    const gap = GameState.config.cellGap;
+export function spawnRawBlock(r, c, color, idStr) {
+    const board = document.getElementById('game-board');
     const cellSize = GameState.config.cellSize;
+    
+    const block = document.createElement('div');
+    block.className = `block ${color}`;
+    block.style.width = `${cellSize}px`;
+    block.style.height = `${cellSize}px`;
+    block.dataset.id = idStr;
+    block.dataset.row = r;
+    block.dataset.col = c;
 
-    // Pick a color that doesn't cause immediate 3-match
-    let allowedColors = [...GameState.config.colors];
+    block.addEventListener('touchstart', handlePointerDown, { passive: false });
+    block.addEventListener('mousedown', handlePointerDown);
+    block.addEventListener('touchend', handlePointerUp);
+    block.addEventListener('mouseup', handlePointerUp);
+    block.addEventListener('mouseleave', handlePointerUp);
 
-    if (r >= 2 && GameState.board[r - 1][c] && GameState.board[r - 2][c] &&
-        GameState.board[r - 1][c].color === GameState.board[r - 2][c].color) {
-        allowedColors = allowedColors.filter(color => color !== GameState.board[r - 1][c].color);
-    }
-    if (c >= 2 && GameState.board[r][c - 1] && GameState.board[r][c - 2] &&
-        GameState.board[r][c - 1].color === GameState.board[r][c - 2].color) {
-        allowedColors = allowedColors.filter(color => color !== GameState.board[r][c - 1].color);
-    }
-
-    const colorIndex = Math.floor(Math.random() * allowedColors.length);
-    const color = allowedColors[colorIndex];
-
-    const blockEl = document.createElement('div');
-    blockEl.className = `block ${color}`;
-    blockEl.dataset.row = r;
-    blockEl.dataset.col = c;
-
-    blockEl.style.width = `${cellSize}px`;
-    blockEl.style.height = `${cellSize}px`;
-
-    // Initial position logic
-    setBlockPosition(blockEl, r, c);
-
-    // Hook up inputs
-    setupInputHandlers(blockEl);
-
-    document.getElementById('game-board').appendChild(blockEl);
-
-    GameState.board[r][c] = {
-        element: blockEl,
-        color: color
-    };
+    board.appendChild(block);
+    return block;
 }
 
-export function setBlockPosition(element, row, col) {
+export function setBlockPosition(block, row, col) {
     const gap = GameState.config.cellGap;
     const cellSize = GameState.config.cellSize;
-    element.style.transform = `translate(${col * (cellSize + gap) + gap}px, ${row * (cellSize + gap) + gap}px)`;
-    element.dataset.row = row;
-    element.dataset.col = col;
+    block.dataset.row = row;
+    block.dataset.col = col;
+    block.style.transform = `translate(${col * (cellSize + gap) + gap}px, ${row * (cellSize + gap) + gap}px)`;
+}
+
+function handlePointerDown(e) {
+    if (GameState.isInputLocked) return;
+    draggedBlock = e.target;
+    if (e.touches && e.touches.length > 0) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    } else {
+        startX = e.clientX;
+        startY = e.clientY;
+    }
+}
+
+function handlePointerUp(e) {
+    if (!draggedBlock || GameState.isInputLocked) return;
+    
+    let endX, endY;
+    if (e.changedTouches && e.changedTouches.length > 0) {
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+    } else {
+        endX = e.clientX;
+        endY = e.clientY;
+    }
+
+    const diffX = endX - startX;
+    const diffY = endY - startY;
+
+    if (Math.abs(diffX) > 20 || Math.abs(diffY) > 20) {
+        let dirX = 0, dirY = 0;
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            dirX = diffX > 0 ? 1 : -1;
+        } else {
+            dirY = diffY > 0 ? 1 : -1;
+        }
+
+        const r = parseInt(draggedBlock.dataset.row);
+        const c = parseInt(draggedBlock.dataset.col);
+        handleInputSwap(r, c, dirX, dirY);
+    }
+    draggedBlock = null;
 }

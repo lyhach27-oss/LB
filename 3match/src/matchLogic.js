@@ -1,96 +1,12 @@
 import { GameState } from './gameState.js';
-import { setBlockPosition } from './gameBoard.js';
+import { setBlockPosition, spawnRawBlock } from './gameBoard.js';
+import { pushDoor } from './physics.js';
 
-let draggedBlock = null;
-let startX = 0;
-let startY = 0;
-
-export function setupInputHandlers(blockEl) {
-    // Touch events for mobile playable ad
-    blockEl.addEventListener('touchstart', onTouchStart, { passive: false });
-    blockEl.addEventListener('touchmove', onTouchMove, { passive: false });
-    blockEl.addEventListener('touchend', onTouchEnd, { passive: false });
-
-    // Mouse events for desktop testing
-    blockEl.addEventListener('mousedown', onMouseDown);
-}
-
-function onTouchStart(e) {
+export function handleInputSwap(r, c, dirX, dirY) {
     if (GameState.isInputLocked) return;
-    draggedBlock = e.target.closest('.block');
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    // e.preventDefault(); // Prevent scrolling
-}
-
-function onTouchMove(e) {
-    if (!draggedBlock || GameState.isInputLocked) return;
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-
-    const diffX = currentX - startX;
-    const diffY = currentY - startY;
-
-    // Threshold to trigger swap
-    if (Math.abs(diffX) > 30 || Math.abs(diffY) > 30) {
-        let targetRow = parseInt(draggedBlock.dataset.row);
-        let targetCol = parseInt(draggedBlock.dataset.col);
-
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            targetCol += diffX > 0 ? 1 : -1;
-        } else {
-            targetRow += diffY > 0 ? 1 : -1;
-        }
-
-        draggedBlock = null; // Reset immediately to prevent multiple triggers
-        handleSwap(parseInt(e.target.dataset.row), parseInt(e.target.dataset.col), targetRow, targetCol);
-    }
-}
-
-function onTouchEnd(e) {
-    draggedBlock = null;
-}
-
-function onMouseDown(e) {
-    if (GameState.isInputLocked) return;
-    draggedBlock = e.target.closest('.block');
-    startX = e.clientX;
-    startY = e.clientY;
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-}
-
-function onMouseMove(e) {
-    if (!draggedBlock || GameState.isInputLocked) return;
-    const diffX = e.clientX - startX;
-    const diffY = e.clientY - startY;
-
-    if (Math.abs(diffX) > 30 || Math.abs(diffY) > 30) {
-        let targetRow = parseInt(draggedBlock.dataset.row);
-        let targetCol = parseInt(draggedBlock.dataset.col);
-
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            targetCol += diffX > 0 ? 1 : -1;
-        } else {
-            targetRow += diffY > 0 ? 1 : -1;
-        }
-
-        let sourceRow = parseInt(draggedBlock.dataset.row);
-        let sourceCol = parseInt(draggedBlock.dataset.col);
-
-        draggedBlock = null;
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-
-        handleSwap(sourceRow, sourceCol, targetRow, targetCol);
-    }
-}
-
-function onMouseUp() {
-    draggedBlock = null;
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
+    let targetRow = r + dirY;
+    let targetCol = c + dirX;
+    handleSwap(r, c, targetRow, targetCol);
 }
 
 // ----------------------------------------------------
@@ -107,27 +23,25 @@ async function handleSwap(r1, c1, r2, c2) {
     GameState.board[r1][c1] = GameState.board[r2][c2];
     GameState.board[r2][c2] = temp;
 
-    // Visually swap
-    setBlockPosition(GameState.board[r1][c1].element, r1, c1);
-    setBlockPosition(GameState.board[r2][c2].element, r2, c2);
+    if (GameState.board[r1][c1]) setBlockPosition(GameState.board[r1][c1].element, r1, c1);
+    if (GameState.board[r2][c2]) setBlockPosition(GameState.board[r2][c2].element, r2, c2);
 
-    await sleep(250); // wait for animation
+    await sleep(200); 
 
     const matches = findMatches();
 
     if (matches.length > 0) {
-        GameState.currentMoves--;
-        GameState.updateHUD();
         await processMatches(matches);
     } else {
         // Swap back (Invalid move)
         const tempBack = GameState.board[r1][c1];
         GameState.board[r1][c1] = GameState.board[r2][c2];
         GameState.board[r2][c2] = tempBack;
-
-        setBlockPosition(GameState.board[r1][c1].element, r1, c1);
-        setBlockPosition(GameState.board[r2][c2].element, r2, c2);
-        await sleep(250);
+        
+        if (GameState.board[r1][c1]) setBlockPosition(GameState.board[r1][c1].element, r1, c1);
+        if (GameState.board[r2][c2]) setBlockPosition(GameState.board[r2][c2].element, r2, c2);
+        
+        await sleep(200);
         GameState.isInputLocked = false;
     }
 }
@@ -172,30 +86,22 @@ function findMatches() {
 }
 
 async function processMatches(matches) {
-    // 1. Remove blocks
+    // 1. Remove blocks via CSS animation
     matches.forEach(m => {
         let block = GameState.board[m.r][m.c];
-        if (block) {
-            if (block.color === GameState.config.objectiveColor) {
-                GameState.currentObjectiveCount++;
-                GameState.updateHUD();
-            }
-
-            // Visual pop
-            block.element.style.transform += ' scale(0)';
-            block.element.style.opacity = '0';
-
-            setTimeout(() => {
-                if (block.element.parentNode) block.element.parentNode.removeChild(block.element);
-            }, 200);
-
+        if (block && block.element) {
+            block.element.style.transform = `${block.element.style.transform} scale(0)`;
+            setTimeout(() => { if (block.element.parentNode) block.element.remove(); }, 200);
             GameState.board[m.r][m.c] = null;
         }
     });
 
-    await sleep(250);
+    // 🌶️ PUSH THE DEFENSE DOOR!
+    pushDoor(matches.length);
 
-    // 2. Gravity (Fall down)
+    await sleep(200);
+
+    // 2. Gravity (Fall down) 
     let moved = false;
     for (let c = 0; c < GameState.config.cols; c++) {
         let emptySlots = 0;
@@ -203,7 +109,6 @@ async function processMatches(matches) {
             if (!GameState.board[r][c]) {
                 emptySlots++;
             } else if (emptySlots > 0) {
-                // Move block down
                 GameState.board[r + emptySlots][c] = GameState.board[r][c];
                 GameState.board[r][c] = null;
                 setBlockPosition(GameState.board[r + emptySlots][c].element, r + emptySlots, c);
@@ -211,56 +116,41 @@ async function processMatches(matches) {
             }
         }
 
-        // 3. Spawn new blocks at top
+        // 3. Spawning
         for (let i = 0; i < emptySlots; i++) {
-            spawnNewBlock(i, c);
+            const colors = GameState.config.colors;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            
+            const gap = GameState.config.cellGap;
+            const cellSize = GameState.config.cellSize;
+            
+            // Generate DOM and place artificially high
+            const block = spawnRawBlock(i, c, color, Math.random().toString(36).substr(2, 9));
+            block.style.transform = `translate(${c * (cellSize + gap) + gap}px, -200px)`;
+
+            GameState.board[i][c] = {
+                id: block.dataset.id,
+                color: color,
+                element: block
+            };
+            
+            // Trigger reflow
+            block.offsetHeight;
+            setBlockPosition(block, i, c);
+            
             moved = true;
         }
     }
 
-    if (moved) await sleep(300);
+    if (moved) await sleep(200);
 
     // 4. Check Cascades
     const newMatches = findMatches();
     if (newMatches.length > 0) {
         await processMatches(newMatches);
     } else {
-        GameState.updateHUD(); // final sync
-        const isGameOver = GameState.checkWinLossEndCard();
-        if (!isGameOver) {
-            GameState.isInputLocked = false;
-        }
+        GameState.isInputLocked = false;
     }
-}
-
-function spawnNewBlock(r, c) {
-    // Re-implemented simple spawn for gravity
-    const colorIndex = Math.floor(Math.random() * GameState.config.colors.length);
-    const color = GameState.config.colors[colorIndex];
-
-    const blockEl = document.createElement('div');
-    blockEl.className = `block ${color}`;
-
-    const cellSize = GameState.config.cellSize;
-    blockEl.style.width = `${cellSize}px`;
-    blockEl.style.height = `${cellSize}px`;
-
-    // Start above board
-    blockEl.style.transform = `translate(${c * (cellSize + GameState.config.cellGap) + GameState.config.cellGap}px, -100px)`;
-
-    setupInputHandlers(blockEl);
-
-    document.getElementById('game-board').appendChild(blockEl);
-
-    GameState.board[r][c] = {
-        element: blockEl,
-        color: color
-    };
-
-    // Ensure CSS transition triggers after append
-    setTimeout(() => {
-        setBlockPosition(blockEl, r, c);
-    }, 10);
 }
 
 function sleep(ms) {
