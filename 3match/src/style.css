@@ -90,13 +90,7 @@ body, html {
   100% { transform: scale(1); }
 }
 
-/* Colors for Objectives and Blocks */
-.block.red::after { content:''; position:absolute; width:80%; height:80%; top:10%; left:10%; background: url('../assets/images/red.png') center / contain no-repeat; pointer-events: none; }
-.block.blue::after { content:''; position:absolute; width:80%; height:80%; top:10%; left:10%; background: url('../assets/images/blue.png') center / contain no-repeat; pointer-events: none; }
-.block.green::after { content:''; position:absolute; width:80%; height:80%; top:10%; left:10%; background: url('../assets/images/green.png') center / contain no-repeat; pointer-events: none; }
-.block.yellow::after { content:''; position:absolute; width:80%; height:80%; top:10%; left:10%; background: url('../assets/images/yellow.png') center / contain no-repeat; pointer-events: none; }
-.block.purple::after { content:''; position:absolute; width:80%; height:80%; top:10%; left:10%; background: url('../assets/images/purple.png') center / contain no-repeat; pointer-events: none; }
-
+/* Colors for Objectives and Blocks are now injected dynamically */
 /* Physics Area */
 #physics-container {
   position: absolute;

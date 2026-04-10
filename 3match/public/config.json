@@ -1,0 +1,59 @@
+{
+  "texts": {
+    "title": "Match 3 Playable Ad",
+    "endCardWinTitle": "GREAT JOB!",
+    "endCardLossTitle": "OH NO!",
+    "ctaButton": "PLAY NOW",
+    "gameOverTitle": "GAME OVER",
+    "gameOverDesc": "The balls crushed the defender!",
+    "gameClearTitle": "SUCCESS!",
+    "gameClearDesc": "You defended the puzzle successfully!",
+    "downloadButton": "DOWNLOAD NOW",
+    "alertStoreText": "Redirecting to App Store...",
+    "consoleStoreText": "Opened Store Link!",
+    "defenderEmoji": "🧍‍♂️",
+    "defenderDeadEmoji": "💀",
+    "healthEmoji": "💪"
+  },
+  "urls": {
+    "storeLink": "https://example.com/store/app"
+  },
+  "images": {
+    "red": "../assets/images/red.png",
+    "blue": "../assets/images/blue.png",
+    "green": "../assets/images/green.png",
+    "yellow": "../assets/images/yellow.png",
+    "purple": "../assets/images/purple.png"
+  },
+  "board": {
+    "rows": 8,
+    "cols": 10,
+    "cellGap": 5,
+    "colors": ["red", "blue", "green", "yellow", "purple"],
+    "startMoves": 10,
+    "objectiveTarget": 8,
+    "objectiveColor": "red",
+    "maxDangerTranslateY": 60
+  },
+  "physics": {
+    "maxBalls": 180,
+    "totalBalls": 220,
+    "canvasW": 500,
+    "canvasH": 900,
+    "defenderPushForceX": -0.15,
+    "doorMass": 1000,
+    "doorFrictionAir": 0.1,
+    "doorInertia": null,
+    "platformHeight": 10,
+    "smallBallChance": 0.3,
+    "smallBallScale": 6,
+    "largeBallScale": 10,
+    "smallBallRestitution": 0.2,
+    "smallBallDensity": 0.1,
+    "largeBallRestitution": 0.2,
+    "largeBallDensity": 0.15,
+    "smallBallVeloY": 10,
+    "largeBallVeloY": 10,
+    "ballSpawnIntervalMs": 400
+  }
+}

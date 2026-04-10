@@ -1,5 +1,6 @@
 import Matter from 'matter-js';
 import { levels } from './levelConfig.js';
+import { AppConfig } from './configManager.js';
 
 const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
 
@@ -19,7 +20,6 @@ export let canvasW = 500;
 export let canvasH = 900;
 let smoothedVelocity = 0;
 let ballsSpawned = 0;
-const TOTAL_BALLS = 220;
 let ballSpawnInterval;
 
 export function initPhysics(containerId) {
@@ -54,17 +54,17 @@ export function initPhysics(containerId) {
 
     // Ball Spawner
     ballSpawnInterval = setInterval(() => {
-        if (isGameOver || isGameClear || ballsSpawned >= TOTAL_BALLS) {
-            if (ballsSpawned >= TOTAL_BALLS) clearInterval(ballSpawnInterval);
+        if (isGameOver || isGameClear || ballsSpawned >= AppConfig.physics.totalBalls) {
+            if (ballsSpawned >= AppConfig.physics.totalBalls) clearInterval(ballSpawnInterval);
             return;
         }
 
         for (let i = 0; i < 2; i++) {
-            const x = (50 + Math.random() * 100) * (canvasW/500);
+            const x = (50 + Math.random() * 100) * (canvasW / AppConfig.physics.canvasW);
             const y = -20 - Math.random() * 20;
             createBall(x, y);
         }
-    }, 400); 
+    }, AppConfig.physics.ballSpawnIntervalMs); 
 }
 
 function setupGameLoop() {
@@ -73,7 +73,7 @@ function setupGameLoop() {
 
         // Apply natural leftward force simulating the defender pushing back
         // Adjusted for heavier door mass
-        Body.applyForce(doorObj, doorObj.position, { x: -0.15, y: 0 }); 
+        Body.applyForce(doorObj, doorObj.position, { x: AppConfig.physics.defenderPushForceX, y: 0 }); 
 
         let boardTopPx = canvasH * 0.5;
         let boardRightPx = canvasW;
@@ -126,7 +126,7 @@ function setupGameLoop() {
             if (!isGameOver && !isGameClear) {
                 isGameOver = true;
                 const defender = document.getElementById('defender');
-                if(defender) defender.childNodes[0].nodeValue = '💀';
+                if(defender && defender.childNodes[0]) defender.childNodes[0].nodeValue = AppConfig.texts.defenderDeadEmoji;
                 
                 const modal = document.getElementById('game-over-modal');
                 if (modal) modal.style.display = 'flex';
@@ -152,7 +152,7 @@ function setupGameLoop() {
             }
         });
 
-        if (ballsSpawned >= TOTAL_BALLS && activeBalls === 0 && !isGameOver && !isGameClear) {
+        if (ballsSpawned >= AppConfig.physics.totalBalls && activeBalls === 0 && !isGameOver && !isGameClear) {
             isGameClear = true;
             const clearModal = document.getElementById('game-clear-modal');
             if (clearModal) clearModal.style.display = 'flex';
@@ -169,7 +169,7 @@ export function loadLevel(levelName) {
     Engine.clear(engine);
 
     // Add visual funnel scaling to 1:1
-    const sX = canvasW / 500;
+    const sX = canvasW / AppConfig.physics.canvasW;
     levelData.forEach(wall => {
         const staticBody = Bodies.rectangle(wall.x * sX, wall.y, wall.width * sX, wall.height, {
             isStatic: true,
@@ -199,9 +199,9 @@ export function loadLevel(levelName) {
     
     doorObj = Bodies.rectangle(baselineX, doorY, 20, 100, {
         isStatic: false,
-        mass: 1000, // Significantly heavier to act as an anchor against stacking balls
-        frictionAir: 0.1,
-        inertia: Infinity, // Prevents spinning!
+        mass: AppConfig.physics.doorMass,
+        frictionAir: AppConfig.physics.doorFrictionAir,
+        inertia: AppConfig.physics.doorInertia || Infinity,
         render: { fillStyle: '#a30000' }
     });
 
@@ -255,26 +255,26 @@ export function createBall(x, y) {
 
     ballsSpawned++;
 
-    const scale = (canvasW / 500);
+    const scale = (canvasW / AppConfig.physics.canvasW);
     
     // Slight randomization sizes
-    if (Math.random() < 0.3) {
-        const ball = Bodies.circle(x, y, scale * 6, { 
-            restitution: 0.2, 
-            density: 0.1, 
+    if (Math.random() < AppConfig.physics.smallBallChance) {
+        const ball = Bodies.circle(x, y, scale * AppConfig.physics.smallBallScale, { 
+            restitution: AppConfig.physics.smallBallRestitution, 
+            density: AppConfig.physics.smallBallDensity, 
             label: 'ball',
             render: { fillStyle: '#ffeb3b', lineWidth: 1, strokeStyle: '#000' }
         });
-        Body.setVelocity(ball, {x: 0, y: 10});
+        Body.setVelocity(ball, {x: 0, y: AppConfig.physics.smallBallVeloY});
         World.add(engine.world, ball);
     } else {
-        const ball = Bodies.circle(x, y, scale * 10, {
-            restitution: 0.2,
-            density: 0.15,
+        const ball = Bodies.circle(x, y, scale * AppConfig.physics.largeBallScale, {
+            restitution: AppConfig.physics.largeBallRestitution,
+            density: AppConfig.physics.largeBallDensity,
             label: 'ball',
             render: { fillStyle: ['#4287f5', '#f54242', '#42f566', '#f5d142'][Math.floor(Math.random()*4)], lineWidth: 1, strokeStyle: '#000' }
         });
-        Body.setVelocity(ball, {x: 0, y: 10});
+        Body.setVelocity(ball, {x: 0, y: AppConfig.physics.largeBallVeloY});
         World.add(engine.world, ball);
     }
 }

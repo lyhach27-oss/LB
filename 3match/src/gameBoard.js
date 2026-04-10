@@ -1,5 +1,6 @@
 import { GameState } from './gameState.js';
 import { handleInputSwap } from './matchLogic.js';
+import { AppConfig } from './configManager.js';
 
 let draggedBlock = null;
 let startX = 0, startY = 0;
@@ -103,6 +104,23 @@ export function spawnRawBlock(r, c, color, idStr) {
     block.className = `block ${color}`;
     block.style.width = `${cellSize}px`;
     block.style.height = `${cellSize}px`;
+    
+    if (AppConfig.images[color]) {
+        // Create an inner div to act like the ::after pseudo-element
+        // so it scales the same way.
+        const innerImg = document.createElement('div');
+        innerImg.style.width = '80%';
+        innerImg.style.height = '80%';
+        innerImg.style.position = 'absolute';
+        innerImg.style.top = '10%';
+        innerImg.style.left = '10%';
+        innerImg.style.backgroundImage = `url('${AppConfig.images[color]}')`;
+        innerImg.style.backgroundSize = 'contain';
+        innerImg.style.backgroundPosition = 'center';
+        innerImg.style.backgroundRepeat = 'no-repeat';
+        innerImg.style.pointerEvents = 'none';
+        block.appendChild(innerImg);
+    }
     block.dataset.id = idStr;
     block.dataset.row = r;
     block.dataset.col = c;

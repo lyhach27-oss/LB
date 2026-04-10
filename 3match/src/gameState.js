@@ -1,14 +1,7 @@
+import { AppConfig } from './configManager.js';
+
 export const GameState = {
-  config: {
-    rows: 8,
-    cols: 10,
-    cellSize: 50, // will be calculate dynamically based on screen width
-    cellGap: 5,
-    colors: ['red', 'blue', 'green', 'yellow', 'purple'],
-    startMoves: 10,
-    objectiveTarget: 8,
-    objectiveColor: 'red'
-  },
+  get config() { return AppConfig.board; },
   currentMoves: 0,
   currentObjectiveCount: 0,
   isInputLocked: false,
@@ -38,8 +31,8 @@ export const GameState = {
     const movesUsed = totalMoves - this.currentMoves;
     const dangerPercent = Math.min(1, movesUsed / totalMoves);
 
-    // Max translation distance (e.g., 60px down)
-    const maxTranslateY = 60;
+    // Max translation distance
+    const maxTranslateY = AppConfig.board.maxDangerTranslateY;
     const currentTranslateY = dangerPercent * maxTranslateY;
 
     rocks.style.transform = `translateY(${currentTranslateY}px)`;
@@ -73,7 +66,7 @@ export const GameState = {
     if (endCard && title) {
       setTimeout(() => {
         endCard.classList.remove('hidden');
-        title.innerText = isWin ? 'GREAT JOB!' : 'OH NO!';
+        title.innerText = isWin ? AppConfig.texts.endCardWinTitle : AppConfig.texts.endCardLossTitle;
       }, 500); // Wait a bit for character animations to play out
     }
   }
