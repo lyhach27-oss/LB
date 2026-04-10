@@ -18,12 +18,12 @@
   "urls": {
     "storeLink": "https://example.com/store/app"
   },
-  "images": {
-    "red": "../assets/images/red.png",
-    "blue": "../assets/images/blue.png",
-    "green": "../assets/images/green.png",
-    "yellow": "../assets/images/yellow.png",
-    "purple": "../assets/images/purple.png"
+  "hexColors": {
+    "red": "#e74c3c",
+    "blue": "#3498db",
+    "green": "#2ecc71",
+    "yellow": "#f1c40f",
+    "purple": "#9b59b6"
   },
   "board": {
     "rows": 8,
@@ -54,6 +54,21 @@
     "largeBallDensity": 0.15,
     "smallBallVeloY": 10,
     "largeBallVeloY": 10,
-    "ballSpawnIntervalMs": 400
+    "ballSpawnIntervalMs": 400,
+    "defenderOffsetY": -55,
+    "platformThickness": 10,
+    "platformOffsetY": -5,
+    "sideWallWidth": 200,
+    "sideWallColor": "#ffaa00",
+    "sideWallVisible": true
+  },
+  "levels": {
+    "zigzag": [
+      { "x": 150, "y": 100, "width": 300, "height": 20, "angle": 0.2 },
+      { "x": 350, "y": 220, "width": 300, "height": 20, "angle": -0.2 },
+      { "x": 100, "y": 340, "width": 200, "height": 20, "angle": 0.2 },
+      { "x": -10, "y": 250, "width": 20, "height": 500, "angle": 0 },
+      { "x": 510, "y": 250, "width": 20, "height": 500, "angle": 0 }
+    ]
   }
 }

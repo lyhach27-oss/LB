@@ -1,97 +1,58 @@
 import { GameState } from './gameState.js';
-import { setBlockPosition, spawnRawBlock } from './gameBoard.js';
+import { setBlockPosition } from './gameBoard.js';
 import { removePuzzleBlocks } from './physics.js';
+import { AppConfig } from './configManager.js';
 
-export function handleInputSwap(r, c, dirX, dirY) {
+export async function handleInputTap(r, c) {
     if (GameState.isInputLocked) return;
-    let targetRow = r + dirY;
-    let targetCol = c + dirX;
-    handleSwap(r, c, targetRow, targetCol);
-}
-
-// ----------------------------------------------------
-// Logic
-// ----------------------------------------------------
-
-async function handleSwap(r1, c1, r2, c2) {
-    if (r2 < 0 || r2 >= GameState.config.rows || c2 < 0 || c2 >= GameState.config.cols) return;
     
-    // Prevent dragging to/from an empty permanent hole
-    if (!GameState.board[r1][c1] || !GameState.board[r2][c2]) return;
-
-    GameState.isInputLocked = true;
-
-    // Swap in data structure
-    const temp = GameState.board[r1][c1];
-    GameState.board[r1][c1] = GameState.board[r2][c2];
-    GameState.board[r2][c2] = temp;
-
-    if (GameState.board[r1][c1]) setBlockPosition(GameState.board[r1][c1].element, r1, c1);
-    if (GameState.board[r2][c2]) setBlockPosition(GameState.board[r2][c2].element, r2, c2);
-
-    await sleep(200); 
-
-    const matches = findMatches();
-
-    if (matches.length > 0) {
-        await processMatches(matches);
-    } else {
-        // Swap back (Invalid move)
-        const tempBack = GameState.board[r1][c1];
-        GameState.board[r1][c1] = GameState.board[r2][c2];
-        GameState.board[r2][c2] = tempBack;
-        
-        if (GameState.board[r1][c1]) setBlockPosition(GameState.board[r1][c1].element, r1, c1);
-        if (GameState.board[r2][c2]) setBlockPosition(GameState.board[r2][c2].element, r2, c2);
-        
-        await sleep(200);
+    let block = GameState.board[r][c];
+    if (!block) return;
+    
+    const color = block.color;
+    const connected = findConnectedBlocks(r, c, color);
+    
+    if (connected.length >= 2) {
+        GameState.isInputLocked = true;
+        await processMatchesAndGravity(connected);
         GameState.isInputLocked = false;
     }
 }
 
-function findMatches() {
-    let matchedBlocks = new Set();
-
-    // Check rows
-    for (let r = 0; r < GameState.config.rows; r++) {
-        for (let c = 0; c < GameState.config.cols - 2; c++) {
-            let b1 = GameState.board[r][c];
-            let b2 = GameState.board[r][c + 1];
-            let b3 = GameState.board[r][c + 2];
-
-            if (b1 && b2 && b3 && b1.color === b2.color && b2.color === b3.color) {
-                matchedBlocks.add(`${r},${c}`);
-                matchedBlocks.add(`${r},${c + 1}`);
-                matchedBlocks.add(`${r},${c + 2}`);
+function findConnectedBlocks(startR, startC, color) {
+    const rows = AppConfig.board.rows;
+    const cols = AppConfig.board.cols;
+    const visited = new Set();
+    const result = [];
+    
+    const queue = [{ r: startR, c: startC }];
+    visited.add(`${startR},${startC}`);
+    
+    while (queue.length > 0) {
+        const curr = queue.shift();
+        result.push(curr);
+        
+        const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+        for (let d of dirs) {
+            let nr = curr.r + d[0];
+            let nc = curr.c + d[1];
+            
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+                if (!visited.has(`${nr},${nc}`) && GameState.board[nr][nc] && GameState.board[nr][nc].color === color) {
+                    visited.add(`${nr},${nc}`);
+                    queue.push({ r: nr, c: nc });
+                }
             }
         }
     }
-
-    // Check cols
-    for (let c = 0; c < GameState.config.cols; c++) {
-        for (let r = 0; r < GameState.config.rows - 2; r++) {
-            let b1 = GameState.board[r][c];
-            let b2 = GameState.board[r + 1][c];
-            let b3 = GameState.board[r + 2][c];
-
-            if (b1 && b2 && b3 && b1.color === b2.color && b2.color === b3.color) {
-                matchedBlocks.add(`${r},${c}`);
-                matchedBlocks.add(`${r + 1},${c}`);
-                matchedBlocks.add(`${r + 2},${c}`);
-            }
-        }
-    }
-
-    return Array.from(matchedBlocks).map(str => {
-        let [r, c] = str.split(',').map(Number);
-        return { r, c };
-    });
+    
+    return result;
 }
 
-async function processMatches(matches) {
+async function processMatchesAndGravity(matches) {
     const deletePhysicsIds = [];
 
-    // 1. Remove blocks via CSS animation
+    // 1. Remove blocks natively
     matches.forEach(m => {
         let block = GameState.board[m.r][m.c];
         if (block && block.element) {
@@ -102,12 +63,47 @@ async function processMatches(matches) {
         }
     });
 
-    // Open holes in physics layer draining balls
+    // 2. Open physical holes
     removePuzzleBlocks(deletePhysicsIds);
 
     await sleep(200);
+    
+    // 3. Apply Column Gravity
+    await applyGravity();
+}
 
-    GameState.isInputLocked = false;
+async function applyGravity() {
+    const rows = AppConfig.board.rows;
+    const cols = AppConfig.board.cols;
+    let movedAny = false;
+
+    for (let c = 0; c < cols; c++) {
+        // Collect surviving blocks in this column from bottom to top
+        let columnBlocks = [];
+        for (let r = rows - 1; r >= 0; r--) {
+            if (GameState.board[r][c] !== null) {
+                columnBlocks.push(GameState.board[r][c]);
+            }
+        }
+        
+        // Write them back to board, from bottom up
+        for (let r = rows - 1; r >= 0; r--) {
+            if (columnBlocks.length > 0) {
+                const blockObj = columnBlocks.shift();
+                if (GameState.board[r][c] !== blockObj) {
+                    movedAny = true;
+                    GameState.board[r][c] = blockObj;
+                    setBlockPosition(blockObj.element, r, c);
+                }
+            } else {
+                GameState.board[r][c] = null;
+            }
+        }
+    }
+    
+    if (movedAny) {
+        await sleep(200); // Give time for visuals to slide down
+    }
 }
 
 function sleep(ms) {

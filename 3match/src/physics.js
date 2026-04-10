@@ -1,5 +1,4 @@
 import Matter from 'matter-js';
-import { levels } from './levelConfig.js';
 import { AppConfig } from './configManager.js';
 
 const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
@@ -77,16 +76,15 @@ function setupGameLoop() {
 
         let boardTopPx = canvasH * 0.5;
         let boardRightPx = canvasW;
-        const board = document.getElementById('game-board');
-        if (board && board.offsetHeight > 0) {
-            const rect = board.getBoundingClientRect();
-            boardTopPx = rect.top;
-            boardRightPx = rect.right;
+        const boardC = document.getElementById('board-container');
+        if (boardC) {
+            boardTopPx = boardC.offsetTop;
         }
 
-        const baselineX = canvasW * 0.5; // ~50% across the screen (Moved from 70%)
-        // Floor platform is 10px high sitting on top of board. Door sits on top of platform.
-        const doorY = boardTopPx - 60;
+        const baselineX = canvasW * 0.5; // ~50% across the screen
+        
+        // Door Y position using configurable offset
+        const doorY = boardTopPx + AppConfig.physics.defenderOffsetY;
 
         // Force door to stay on Y axis right above the board and securely upright
         Body.setPosition(doorObj, { x: doorObj.position.x, y: doorY });
@@ -97,7 +95,7 @@ function setupGameLoop() {
         // Dynamically keep the floor perfectly synced right beneath door
         const platformW = canvasW; 
         const platformX = baselineX + platformW / 2;
-        const platformY = boardTopPx - 5;
+        const platformY = boardTopPx + AppConfig.physics.platformOffsetY;
         Body.setPosition(floorPlatform, { x: platformX, y: platformY });
 
         // Prevent door from pushing *too* far left past its baseline
@@ -137,7 +135,7 @@ function setupGameLoop() {
         const defender = document.getElementById('defender');
         if (defender) {
             const doorRightPx = doorObj.position.x + 10; 
-            const doorTopPx = doorY - 55; // Sit on the exact logical unit
+            const doorTopPx = doorY + AppConfig.physics.defenderOffsetY + 60; // Approximate visual correction
             defender.style.transform = `translate(${doorRightPx}px, ${doorTopPx}px)`;
         }
 
@@ -162,7 +160,7 @@ function setupGameLoop() {
 
 export function loadLevel(levelName) {
     if (!engine) return;
-    const levelData = levels[levelName];
+    const levelData = AppConfig.levels[levelName];
     if (!levelData) return;
 
     World.clear(engine.world);
@@ -181,21 +179,23 @@ export function loadLevel(levelName) {
 
     const baselineX = canvasW * 0.5;
     let boardTopPx = canvasH * 0.5;
-    const board = document.getElementById('game-board');
-    if (board && board.offsetHeight > 0) {
-        boardTopPx = board.getBoundingClientRect().top;
+    const boardC = document.getElementById('board-container');
+    if (boardC) {
+        boardTopPx = boardC.offsetTop;
     }
     
-    // Create the standing platform exactly on top of the puzzle roof
+    // Configurable Floor Platform
     const platformW = canvasW; 
-    const platformX = baselineX + platformW / 2; // stretches infinitely to the right
-    const platformY = boardTopPx - 5; // 10px high, hugs exactly the roof
-    floorPlatform = Bodies.rectangle(platformX, platformY, platformW, 10, {
+    const platformX = baselineX + platformW / 2;
+    const platformY = boardTopPx + AppConfig.physics.platformOffsetY;
+    const platformThick = AppConfig.physics.platformThickness;
+    
+    floorPlatform = Bodies.rectangle(platformX, platformY, platformW, platformThick, {
         isStatic: true,
         render: { fillStyle: '#ffaa00' } // Matching the wall aesthetics
     });
 
-    const doorY = boardTopPx - 60; // 50px (half door) + 10px (platform thickness)
+    const doorY = boardTopPx + AppConfig.physics.defenderOffsetY;
     
     doorObj = Bodies.rectangle(baselineX, doorY, 20, 100, {
         isStatic: false,
@@ -205,7 +205,21 @@ export function loadLevel(levelName) {
         render: { fillStyle: '#a30000' }
     });
 
-    World.add(engine.world, [doorObj, floorPlatform]);
+    // Generate strict side walls for the fixed mobile canvas
+    const sideWallWidth = AppConfig.physics.sideWallWidth || 100;
+    const sideWallColor = AppConfig.physics.sideWallColor || '#ffaa00';
+    const sideWallVisible = AppConfig.physics.sideWallVisible !== false;
+    
+    const leftWall = Bodies.rectangle(0 - sideWallWidth/2, canvasH/2, sideWallWidth, canvasH*2, { 
+        isStatic: true, 
+        render: { fillStyle: sideWallColor, visible: sideWallVisible } 
+    });
+    const rightWall = Bodies.rectangle(canvasW + sideWallWidth/2, canvasH/2, sideWallWidth, canvasH*2, { 
+        isStatic: true, 
+        render: { fillStyle: sideWallColor, visible: sideWallVisible } 
+    });
+
+    World.add(engine.world, [doorObj, floorPlatform, leftWall, rightWall]);
     balls = [];
     isGameOver = false;
     isGameClear = false;

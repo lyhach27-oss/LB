@@ -43,12 +43,18 @@ async function initGame() {
   
   initBoard();
 
+  function rescaleApp() {
+      const app = document.getElementById('app');
+      // Fit either width or height, preserving aspect ratio. 500x900
+      const scale = Math.min(window.innerWidth / 500, window.innerHeight / 900);
+      app.style.transform = `translateX(-50%) scale(${scale})`;
+  }
+  
   window.addEventListener('resize', () => {
-    clearTimeout(window.resizeTimer);
-    window.resizeTimer = setTimeout(() => {
-      initBoard(); 
-    }, 200);
+    rescaleApp();
   });
+  
+  rescaleApp(); // Initial scale
 
   if (ctaBtn) {
     ctaBtn.addEventListener('click', () => {
