@@ -13,6 +13,7 @@ export let doorObj = null;
 export let floorPlatform = null;
 let isGameOver = false;
 let isGameClear = false;
+let winTimerStarted = false;
 export const puzzleBodies = {};
 
 export let canvasW = 500;
@@ -105,7 +106,19 @@ function setupGameLoop() {
         }
 
         // Game Over & Health Logic
-        const deathThresholdX = boardRightPx - 12; 
+        const sideWallOffset = AppConfig.physics.sideWallOffsetX || 15;
+        let defenderWidth = 0;
+        let defenderHeight = 0;
+        const defender = document.getElementById('defender');
+        if (defender) {
+            defenderWidth = defender.offsetWidth;
+            defenderHeight = defender.offsetHeight;
+        }
+
+        // Death occurs if door right edge + squished defender width touches right side wall
+        // *0.8 means the game ends when the character gets slightly physically squeezed
+        const squishTolerance = defenderWidth * 0.8;
+        const deathThresholdX = boardRightPx - sideWallOffset - 10 - squishTolerance; 
         const totalDist = deathThresholdX - baselineX;
         let currentDist = doorObj.position.x - baselineX;
         if(currentDist < 0) currentDist = 0;
@@ -132,29 +145,35 @@ function setupGameLoop() {
         }
 
         // Visual Sync for Defender Emoji based on Door position
-        const defender = document.getElementById('defender');
         if (defender) {
-            const doorRightPx = doorObj.position.x + 10; 
-            const doorTopPx = doorY + AppConfig.physics.defenderOffsetY + 60; // Approximate visual correction
-            defender.style.transform = `translate(${doorRightPx}px, ${doorTopPx}px)`;
+            const defenderOffsetX = AppConfig.physics.defenderOffsetX || 0;
+            const doorRightPx = doorObj.position.x + 10 + defenderOffsetX; 
+            const platformThick = AppConfig.physics.platformThickness || 10;
+            const floorTopEdge = platformY - platformThick / 2;
+            
+            // Pin the dynamically measured BOTTOM of the emoji directly onto the TOP edge of the floor platform
+            const defenderTopPx = floorTopEdge - defenderHeight;
+            defender.style.transform = `translate(${doorRightPx}px, ${defenderTopPx}px)`;
         }
 
         // Win Condition logic
-        let activeBalls = 0;
         Composite.allBodies(engine.world).forEach(body => {
-            if (body.label === 'ball') activeBalls++;
-            
             // Clean up bodies that fall out of bounds
             if (body.position.y > canvasH + 100) {
+                if (body.label === 'ball' && !winTimerStarted && !isGameOver && !isGameClear) {
+                    winTimerStarted = true;
+                    const popDelay = AppConfig.physics.winPopupDelayMs || 5000;
+                    setTimeout(() => {
+                        if (!isGameOver) {
+                            isGameClear = true;
+                            const clearModal = document.getElementById('game-clear-modal');
+                            if (clearModal) clearModal.style.display = 'flex';
+                        }
+                    }, popDelay);
+                }
                 World.remove(engine.world, body);
             }
         });
-
-        if (ballsSpawned >= AppConfig.physics.totalBalls && activeBalls === 0 && !isGameOver && !isGameClear) {
-            isGameClear = true;
-            const clearModal = document.getElementById('game-clear-modal');
-            if (clearModal) clearModal.style.display = 'flex';
-        }
     });
 }
 
@@ -209,12 +228,13 @@ export function loadLevel(levelName) {
     const sideWallWidth = AppConfig.physics.sideWallWidth || 100;
     const sideWallColor = AppConfig.physics.sideWallColor || '#ffaa00';
     const sideWallVisible = AppConfig.physics.sideWallVisible !== false;
+    const sideWallOffset = AppConfig.physics.sideWallOffsetX || 15; // Shift inward so it aligns on screen
     
-    const leftWall = Bodies.rectangle(0 - sideWallWidth/2, canvasH/2, sideWallWidth, canvasH*2, { 
+    const leftWall = Bodies.rectangle(0 - sideWallWidth/2 + sideWallOffset, canvasH/2, sideWallWidth, canvasH*2, { 
         isStatic: true, 
         render: { fillStyle: sideWallColor, visible: sideWallVisible } 
     });
-    const rightWall = Bodies.rectangle(canvasW + sideWallWidth/2, canvasH/2, sideWallWidth, canvasH*2, { 
+    const rightWall = Bodies.rectangle(canvasW + sideWallWidth/2 - sideWallOffset, canvasH/2, sideWallWidth, canvasH*2, { 
         isStatic: true, 
         render: { fillStyle: sideWallColor, visible: sideWallVisible } 
     });
@@ -224,6 +244,7 @@ export function loadLevel(levelName) {
     isGameOver = false;
     isGameClear = false;
     ballsSpawned = 0;
+    winTimerStarted = false;
 }
 
 export function createPuzzleBlock(id, x, y, width, height) {

@@ -3,24 +3,24 @@ import { handleInputTap } from './matchLogic.js';
 import { AppConfig } from './configManager.js';
 
 export function syncPhysicsBlock(block, r, c) {
-    const board = document.getElementById('game-board');
-    if (!board) return;
+    const boardC = document.getElementById('board-container');
+    if (!boardC) return;
 
-    // Use absolute screen coordinates so Physics Engine 1:1 perfectly overlaps
-    const boardRect = board.getBoundingClientRect();
+    // Use pure logical coordinates matching the 500x900 physics engine
     const gap = GameState.config.cellGap;
     const cellSize = GameState.config.cellSize;
     const cols = GameState.config.cols;
     
     const boardLogicWidth = cols * (cellSize + gap) + gap;
-    const scale = boardRect.width / boardLogicWidth;
+    const boardLeftLogic = (500 - boardLogicWidth) / 2;
+    const boardTopLogic = boardC.offsetTop;
 
     const localX = gap + c * (cellSize + gap) + cellSize / 2;
     const localY = gap + r * (cellSize + gap) + cellSize / 2;
 
-    const absoluteX = boardRect.left + (localX * scale);
-    const absoluteY = boardRect.top + (localY * scale);
-    const absoluteSize = cellSize * scale;
+    const absoluteX = boardLeftLogic + localX;
+    const absoluteY = boardTopLogic + localY;
+    const absoluteSize = cellSize;
 
     const id = block.dataset.id;
 
