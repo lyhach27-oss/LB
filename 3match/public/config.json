@@ -1,4 +1,5 @@
 {
+  "instanceId": "game01",
   "texts": {
     "title": "Match 3 Playable Ad",
     "endCardWinTitle": "GREAT JOB!",
@@ -30,9 +31,6 @@
     "cols": 10,
     "cellGap": 5,
     "colors": ["red", "blue", "green", "yellow", "purple"],
-    "startMoves": 10,
-    "objectiveTarget": 8,
-    "objectiveColor": "red",
     "maxDangerTranslateY": 60
   },
   "physics": {

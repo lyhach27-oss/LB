@@ -18,7 +18,7 @@ body, html {
   touch-action: none;
 }
 
-#app {
+[id$="-app"] {
   width: 500px;
   height: 900px;
   display: flex;
@@ -70,7 +70,7 @@ body, html {
   position: relative;
 }
 
-#cta-button {
+[id$="-cta-button"] {
   background: linear-gradient(135deg, #ff416c, #ff4b2b);
   border: none;
   padding: 12px 30px;
@@ -84,7 +84,7 @@ body, html {
   animation: pulse 2s infinite;
 }
 
-#cta-button:hover {
+[id$="-cta-button"]:hover {
   transform: scale(1.05);
   box-shadow: 0 6px 20px rgba(255, 75, 43, 0.6);
 }
@@ -97,7 +97,7 @@ body, html {
 
 /* Colors for Objectives and Blocks are now injected dynamically */
 /* Physics Area */
-#physics-container {
+[id$="-physics-container"] {
   position: absolute;
   top: 0;
   left: 0;
@@ -109,7 +109,7 @@ body, html {
   pointer-events: none; /* Let drag events pass through to DOM below */
 }
 
-#defender {
+[id$="-defender"] {
   position: absolute;
   font-size: 3.5rem;
   top: 0;
@@ -121,7 +121,7 @@ body, html {
 }
 
 /* Board */
-#board-container {
+[id$="-board-container"] {
   position: relative; /* CRITICAL: Creates stacking context to contain absolute child z-indexes */
   margin-top: auto;
   height: 50%;
@@ -134,7 +134,7 @@ body, html {
   box-sizing: border-box;
 }
 
-#game-board {
+[id$="-game-board"] {
   position: relative;
 }
 

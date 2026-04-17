@@ -16,8 +16,8 @@ let isGameClear = false;
 let winTimerStarted = false;
 export const puzzleBodies = {};
 
-export let canvasW = 500;
-export let canvasH = 900;
+export let canvasW;
+export let canvasH;
 let smoothedVelocity = 0;
 let ballsSpawned = 0;
 let ballSpawnInterval;
@@ -26,8 +26,8 @@ export function initPhysics(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    canvasW = container.clientWidth;
-    canvasH = container.clientHeight;
+    canvasW = AppConfig.physics.canvasW;
+    canvasH = AppConfig.physics.canvasH;
 
     engine = Engine.create();
     
@@ -77,7 +77,7 @@ function setupGameLoop() {
 
         let boardTopPx = canvasH * 0.5;
         let boardRightPx = canvasW;
-        const boardC = document.getElementById('board-container');
+        const boardC = document.getElementById(AppConfig.instanceId + '-board-container');
         if (boardC) {
             boardTopPx = boardC.offsetTop;
         }
@@ -109,7 +109,7 @@ function setupGameLoop() {
         const sideWallOffset = AppConfig.physics.sideWallOffsetX || 15;
         let defenderWidth = 0;
         let defenderHeight = 0;
-        const defender = document.getElementById('defender');
+        const defender = document.getElementById(AppConfig.instanceId + '-defender');
         if (defender) {
             defenderWidth = defender.offsetWidth;
             defenderHeight = defender.offsetHeight;
@@ -136,10 +136,10 @@ function setupGameLoop() {
         if (doorObj.position.x >= deathThresholdX) {
             if (!isGameOver && !isGameClear) {
                 isGameOver = true;
-                const defender = document.getElementById('defender');
+                const defender = document.getElementById(AppConfig.instanceId + '-defender');
                 if(defender && defender.childNodes[0]) defender.childNodes[0].nodeValue = AppConfig.texts.defenderDeadEmoji;
                 
-                const modal = document.getElementById('game-over-modal');
+                const modal = document.getElementById(AppConfig.instanceId + '-game-over-modal');
                 if (modal) modal.style.display = 'flex';
             }
         }
@@ -166,7 +166,7 @@ function setupGameLoop() {
                     setTimeout(() => {
                         if (!isGameOver) {
                             isGameClear = true;
-                            const clearModal = document.getElementById('game-clear-modal');
+                            const clearModal = document.getElementById(AppConfig.instanceId + '-game-clear-modal');
                             if (clearModal) clearModal.style.display = 'flex';
                         }
                     }, popDelay);

@@ -3,16 +3,16 @@ import { handleInputTap } from './matchLogic.js';
 import { AppConfig } from './configManager.js';
 
 export function syncPhysicsBlock(block, r, c) {
-    const boardC = document.getElementById('board-container');
+    const boardC = document.getElementById(AppConfig.instanceId + '-board-container');
     if (!boardC) return;
 
-    // Use pure logical coordinates matching the 500x900 physics engine
+    // Use pure logical coordinates matching the AppConfig.physics.canvasWxAppConfig.physics.canvasH physics engine
     const gap = GameState.config.cellGap;
     const cellSize = GameState.config.cellSize;
     const cols = GameState.config.cols;
     
     const boardLogicWidth = cols * (cellSize + gap) + gap;
-    const boardLeftLogic = (500 - boardLogicWidth) / 2;
+    const boardLeftLogic = (AppConfig.physics.canvasW - boardLogicWidth) / 2;
     const boardTopLogic = boardC.offsetTop;
 
     const localX = gap + c * (cellSize + gap) + cellSize / 2;
@@ -35,10 +35,10 @@ export function syncPhysicsBlock(block, r, c) {
 }
 
 export function initBoard() {
-    const board = document.getElementById('game-board');
+    const board = document.getElementById(AppConfig.instanceId + '-game-board');
     if (!board) return;
 
-    // Fixed logical 500x900 coordinate system, scaling is handled by #app wrapper
+    // Fixed logical AppConfig.physics.canvasWxAppConfig.physics.canvasH coordinate system, scaling is handled by #app wrapper
     board.style.transformOrigin = 'top center';
     board.style.transform = `scale(1.0)`;
 
@@ -46,7 +46,7 @@ export function initBoard() {
     const cols = GameState.config.cols;
     const rows = GameState.config.rows;
     
-    const computedSize = Math.floor((500 - gap * (cols + 1)) / cols);
+    const computedSize = Math.floor((AppConfig.physics.canvasW - gap * (cols + 1)) / cols);
     GameState.config.cellSize = computedSize;
     const cellSize = computedSize;
 
@@ -85,7 +85,7 @@ export function initBoard() {
 }
 
 export function spawnRawBlock(r, c, color, idStr) {
-    const board = document.getElementById('game-board');
+    const board = document.getElementById(AppConfig.instanceId + '-game-board');
     const cellSize = GameState.config.cellSize;
     
     const block = document.createElement('div');

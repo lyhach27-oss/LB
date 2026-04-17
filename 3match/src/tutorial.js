@@ -16,7 +16,7 @@ export function showTutorial() {
 
         const pos1 = getLogicalPos(hint.r, hint.c);
 
-        const container = document.getElementById('physics-container');
+        const container = document.getElementById(AppConfig.instanceId + '-physics-container');
         if (!container) return;
         const rect = container.getBoundingClientRect();
         
@@ -26,7 +26,7 @@ export function showTutorial() {
         const startX = pos1.x * scaleX + rect.left + HAND_OFFSET_X;
         const startY = pos1.y * scaleY + rect.top + HAND_OFFSET_Y;
 
-        const appRect = document.getElementById('app').getBoundingClientRect();
+        const appRect = document.getElementById(AppConfig.instanceId + '-app').getBoundingClientRect();
         const offsetX = -appRect.left;
         const offsetY = -appRect.top;
 
