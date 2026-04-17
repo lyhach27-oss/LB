@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>게임 만들기 시작 전 규칙</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #f8f9fb;
+    color: #111827;
+    padding: 2rem 1rem;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .top-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #6B7280;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.3rem;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: #6B7280;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  .section { margin-bottom: 1.75rem; }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .icon-blue  { background: #E6F1FB; color: #185FA5; }
+  .icon-green { background: #EAF3DE; color: #3B6D11; }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .tag-must { background: #FCEBEB; color: #A32D2D; }
+  .tag-tip  { background: #EAF3DE; color: #3B6D11; }
+
+  .rule-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .rule {
+    background: #fff;
+    border: 1px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+
+  .rule-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .rule-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: #9CA3AF;
+    min-width: 18px;
+    padding-top: 2px;
+  }
+
+  .rule-content { flex: 1; }
+
+  .rule-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4px;
+  }
+
+  .rule-desc {
+    font-size: 13px;
+    color: #6B7280;
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+
+  .prompt-box {
+    margin-top: 10px;
+    background: #F3F8FF;
+    border-radius: 8px;
+    padding: 10px 12px;
+    border-left: 3px solid #378ADD;
+    position: relative;
+  }
+
+  .prompt-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #185FA5;
+    margin-bottom: 6px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .prompt-text {
+    font-size: 12px;
+    color: #1F2937;
+    font-family: 'Courier New', monospace;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-all;
+    padding-right: 56px;
+  }
+
+  .copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .copy-btn:hover { background: #F1F5F9; }
+  .copy-btn.copied { background: #EAF3DE; color: #3B6D11; border-color: #86EFAC; }
+
+  .config-grid {
+    margin-top: 10px;
+    background: #F9FAFB;
+    border-radius: 8px;
+    border: 1px solid #E5E7EB;
+    overflow: hidden;
+  }
+  .config-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 8px 12px;
+    border-bottom: 1px solid #E5E7EB;
+    gap: 12px;
+  }
+  .config-row:last-child { border-bottom: none; }
+  .config-key {
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    color: #185FA5;
+    font-weight: 600;
+    min-width: 160px;
+  }
+  .config-desc {
+    font-size: 12px;
+    color: #6B7280;
+    line-height: 1.5;
+  }
+
+  hr.divider {
+    border: none;
+    border-top: 1px solid #E5E7EB;
+    margin: 1.5rem 0;
+  }
+
+  .warn-box {
+    background: #FFFBEB;
+    border-radius: 10px;
+    padding: 14px 16px;
+    border-left: 3px solid #F59E0B;
+    margin-bottom: 1.5rem;
+  }
+  .warn-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #92400E;
+    margin-bottom: 6px;
+  }
+  .warn-desc {
+    font-size: 12px;
+    color: #78350F;
+    line-height: 1.7;
+  }
+  .warn-desc strong {
+    display: block;
+    margin-top: 8px;
+    background: #FEF3C7;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .bottom-note {
+    font-size: 12px;
+    color: #6B7280;
+    background: #F3F4F6;
+    border-radius: 10px;
+    padding: 12px 16px;
+    line-height: 1.7;
+  }
+  .bottom-note strong { color: #374151; }
+
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: #9CA3AF;
+    margin-top: 2rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="top-label">플레이어블 광고 라이브러리</div>
+  <h1>게임 만들기 시작 전 규칙</h1>
+  <p class="subtitle">AI한테 게임 만들어달라고 하기 전에, 아래 내용을 프롬프트에 꼭 넣어주세요.</p>
+
+  <!-- 섹션 1: 필수 규칙 -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon icon-blue">①</div>
+      <div class="section-title">반드시 지켜야 할 규칙 <span class="tag tag-must">필수</span></div>
+    </div>
+    <div class="rule-list">
+
+      <div class="rule">
+        <div class="rule-top">
+          <div class="rule-num">1</div>
+          <div class="rule-content">
+            <div class="rule-title">숫자·색상·텍스트는 코드 안에 쓰지 말 것</div>
+            <div class="rule-desc">크기, 색상, 문구 같은 값을 코드 안에 직접 쓰면 나중에 수정이 너무 어려워져요. 반드시 config.json 파일을 따로 만들어서 거기서 불러오게 해야 해요.</div>
+            <div class="prompt-box">
+              <div class="prompt-label">프롬프트에 이렇게 써요</div>
+              <pre class="prompt-text" id="p1">숫자, 색상, 이미지 경로, 텍스트는 절대 코드 안에 하드코딩하지 말고 config.json 파일을 별도로 만들어서 거기서 불러와줘.</pre>
+              <button class="copy-btn" onclick="copy('p1', this)">복사</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-top">
+          <div class="rule-num">2</div>
+          <div class="rule-content">
+            <div class="rule-title">config.json에 반드시 있어야 하는 항목들</div>
+            <div class="rule-desc">게임을 만들면서 AI가 config.json을 만들 때 아래 항목들이 포함되어 있는지 확인하세요.</div>
+            <div class="config-grid">
+              <div class="config-row"><div class="config-key">instanceId</div><div class="config-desc">게임 고유 이름 (예: "game01") — 다른 게임과 겹치지 않게</div></div>
+              <div class="config-row"><div class="config-key">canvasW / canvasH</div><div class="config-desc">화면 가로·세로 크기 (예: 500 / 900)</div></div>
+              <div class="config-row"><div class="config-key">board.rows / cols</div><div class="config-desc">퍼즐 칸 수 (예: 8행 10열)</div></div>
+              <div class="config-row"><div class="config-key">board.colors</div><div class="config-desc">사용할 색상 목록 (예: ["red","blue","green"])</div></div>
+              <div class="config-row"><div class="config-key">urls.storeLink</div><div class="config-desc">다운로드 버튼 클릭 시 이동할 링크</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-top">
+          <div class="rule-num">3</div>
+          <div class="rule-content">
+            <div class="rule-title">화면 크기를 config에서 받아오게 할 것</div>
+            <div class="rule-desc">물리 엔진이나 캔버스 크기를 500, 900처럼 숫자로 쓰지 말고, config.json의 canvasW와 canvasH를 읽어서 쓰게 해야 해요. 단, 값 할당은 반드시 초기화 함수 안에서 해야 해요.</div>
+            <div class="prompt-box">
+              <div class="prompt-label">프롬프트에 이렇게 써요</div>
+              <pre class="prompt-text" id="p3">캔버스 가로·세로 크기는 코드에 직접 쓰지 말고, config.json의 canvasW와 canvasH 값을 읽어서 사용해줘. 단, 값 할당은 반드시 초기화 함수(init 함수) 내부에서 해줘.</pre>
+              <button class="copy-btn" onclick="copy('p3', this)">복사</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-top">
+          <div class="rule-num">4</div>
+          <div class="rule-content">
+            <div class="rule-title">모든 HTML id 앞에 게임 이름 붙이기</div>
+            <div class="rule-desc">나중에 여러 게임을 한 화면에 합칠 때 이름이 겹치면 오류가 나요. config.json의 instanceId 값을 모든 id 앞에 붙여야 해요.</div>
+            <div class="prompt-box">
+              <div class="prompt-label">프롬프트에 이렇게 써요</div>
+              <pre class="prompt-text" id="p4">HTML의 모든 id 값 앞에 config.json의 instanceId 값을 붙여줘. (예: id="game01-board") JS에서 getElementById를 쓸 때도 동일하게 적용해줘.</pre>
+              <button class="copy-btn" onclick="copy('p4', this)">복사</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 섹션 2: 공통 프롬프트 템플릿 -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon icon-green">②</div>
+      <div class="section-title">게임 시작할 때 쓰는 프롬프트 템플릿 <span class="tag tag-tip">복붙용</span></div>
+    </div>
+    <div class="rule-list">
+      <div class="rule">
+        <div class="rule-top">
+          <div class="rule-num"></div>
+          <div class="rule-content">
+            <div class="rule-desc">아래 내용을 게임 설명 앞에 붙여서 AI에게 보내세요.</div>
+            <div class="prompt-box">
+              <div class="prompt-label">게임 시작 공통 프롬프트 (앞에 붙이기)</div>
+              <pre class="prompt-text" id="template">아래 규칙을 반드시 지켜서 만들어줘.
+
+1. 숫자, 색상, 이미지 경로, 텍스트는 코드에 직접 쓰지 말고 config.json 파일을 별도로 만들어서 거기서 불러와줘.
+2. config.json에 instanceId, canvasW, canvasH, board.rows, board.cols, board.colors, urls.storeLink 항목을 포함해줘.
+3. 캔버스 크기는 초기화 함수 내부에서 config.json의 canvasW, canvasH를 읽어서 할당해줘.
+4. HTML의 모든 id 앞에 config의 instanceId 값을 붙여줘. JS의 getElementById도 동일하게 적용해줘.
+
+---
+[여기서부터 게임 설명 작성]</pre>
+              <button class="copy-btn" onclick="copy('template', this)">복사</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- 경고 박스 -->
+  <div class="warn-box">
+    <div class="warn-title">⚠️ AI가 규칙을 안 지켰을 때</div>
+    <div class="warn-desc">
+      코드를 받고 나서 config.json이 따로 안 만들어졌거나, 코드 안에 숫자가 직접 쓰여 있다면 이렇게 말해주세요.
+      <strong>"config.json이 별도 파일로 분리되어 있지 않아. 위의 규칙대로 다시 만들어줘. 기존 게임 로직은 건드리지 말 것."</strong>
+    </div>
+  </div>
+
+  <!-- 하단 노트 -->
+  <div class="bottom-note">
+    게임 완성 후엔 <strong>라이브러리 등록 체크리스트</strong> 문서로 최종 확인해주세요.<br>
+    이 규칙들을 처음부터 지키면 체크리스트에서 수정할 게 거의 없어요.
+  </div>
+
+  <div class="footer">플레이어블 광고 라이브러리 팀 가이드 v1.0</div>
+
+</div>
+
+<script>
+function copy(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ 복사됨';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '복사';
+      btn.classList.remove('copied');
+    }, 1500);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✓ 복사됨';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '복사';
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+}
+</script>
+</body>
+</html>
