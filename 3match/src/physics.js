@@ -1,5 +1,5 @@
 import Matter from 'matter-js';
-import { levels } from './levelConfig.js';
+import { AppConfig } from './configManager.js';
 
 const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
 
@@ -13,21 +13,21 @@ export let doorObj = null;
 export let floorPlatform = null;
 let isGameOver = false;
 let isGameClear = false;
+let winTimerStarted = false;
 export const puzzleBodies = {};
 
-export let canvasW = 500;
-export let canvasH = 900;
+export let canvasW;
+export let canvasH;
 let smoothedVelocity = 0;
 let ballsSpawned = 0;
-const TOTAL_BALLS = 220;
 let ballSpawnInterval;
 
 export function initPhysics(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    canvasW = container.clientWidth;
-    canvasH = container.clientHeight;
+    canvasW = AppConfig.physics.canvasW;
+    canvasH = AppConfig.physics.canvasH;
 
     engine = Engine.create();
     
@@ -54,17 +54,17 @@ export function initPhysics(containerId) {
 
     // Ball Spawner
     ballSpawnInterval = setInterval(() => {
-        if (isGameOver || isGameClear || ballsSpawned >= TOTAL_BALLS) {
-            if (ballsSpawned >= TOTAL_BALLS) clearInterval(ballSpawnInterval);
+        if (isGameOver || isGameClear || ballsSpawned >= AppConfig.physics.totalBalls) {
+            if (ballsSpawned >= AppConfig.physics.totalBalls) clearInterval(ballSpawnInterval);
             return;
         }
 
         for (let i = 0; i < 2; i++) {
-            const x = (50 + Math.random() * 100) * (canvasW/500);
+            const x = (50 + Math.random() * 100) * (canvasW / AppConfig.physics.canvasW);
             const y = -20 - Math.random() * 20;
             createBall(x, y);
         }
-    }, 400); 
+    }, AppConfig.physics.ballSpawnIntervalMs); 
 }
 
 function setupGameLoop() {
@@ -73,20 +73,19 @@ function setupGameLoop() {
 
         // Apply natural leftward force simulating the defender pushing back
         // Adjusted for heavier door mass
-        Body.applyForce(doorObj, doorObj.position, { x: -0.15, y: 0 }); 
+        Body.applyForce(doorObj, doorObj.position, { x: AppConfig.physics.defenderPushForceX, y: 0 }); 
 
         let boardTopPx = canvasH * 0.5;
         let boardRightPx = canvasW;
-        const board = document.getElementById('game-board');
-        if (board && board.offsetHeight > 0) {
-            const rect = board.getBoundingClientRect();
-            boardTopPx = rect.top;
-            boardRightPx = rect.right;
+        const boardC = document.getElementById(AppConfig.instanceId + '-board-container');
+        if (boardC) {
+            boardTopPx = boardC.offsetTop;
         }
 
-        const baselineX = canvasW * 0.5; // ~50% across the screen (Moved from 70%)
-        // Floor platform is 10px high sitting on top of board. Door sits on top of platform.
-        const doorY = boardTopPx - 60;
+        const baselineX = canvasW * 0.5; // ~50% across the screen
+        
+        // Door Y position using configurable offset
+        const doorY = boardTopPx + AppConfig.physics.defenderOffsetY;
 
         // Force door to stay on Y axis right above the board and securely upright
         Body.setPosition(doorObj, { x: doorObj.position.x, y: doorY });
@@ -97,7 +96,7 @@ function setupGameLoop() {
         // Dynamically keep the floor perfectly synced right beneath door
         const platformW = canvasW; 
         const platformX = baselineX + platformW / 2;
-        const platformY = boardTopPx - 5;
+        const platformY = boardTopPx + AppConfig.physics.platformOffsetY;
         Body.setPosition(floorPlatform, { x: platformX, y: platformY });
 
         // Prevent door from pushing *too* far left past its baseline
@@ -107,7 +106,19 @@ function setupGameLoop() {
         }
 
         // Game Over & Health Logic
-        const deathThresholdX = boardRightPx - 12; 
+        const sideWallOffset = AppConfig.physics.sideWallOffsetX || 15;
+        let defenderWidth = 0;
+        let defenderHeight = 0;
+        const defender = document.getElementById(AppConfig.instanceId + '-defender');
+        if (defender) {
+            defenderWidth = defender.offsetWidth;
+            defenderHeight = defender.offsetHeight;
+        }
+
+        // Death occurs if door right edge + squished defender width touches right side wall
+        // *0.8 means the game ends when the character gets slightly physically squeezed
+        const squishTolerance = defenderWidth * 0.8;
+        const deathThresholdX = boardRightPx - sideWallOffset - 10 - squishTolerance; 
         const totalDist = deathThresholdX - baselineX;
         let currentDist = doorObj.position.x - baselineX;
         if(currentDist < 0) currentDist = 0;
@@ -125,51 +136,57 @@ function setupGameLoop() {
         if (doorObj.position.x >= deathThresholdX) {
             if (!isGameOver && !isGameClear) {
                 isGameOver = true;
-                const defender = document.getElementById('defender');
-                if(defender) defender.childNodes[0].nodeValue = '💀';
+                const defender = document.getElementById(AppConfig.instanceId + '-defender');
+                if(defender && defender.childNodes[0]) defender.childNodes[0].nodeValue = AppConfig.texts.defenderDeadEmoji;
                 
-                const modal = document.getElementById('game-over-modal');
+                const modal = document.getElementById(AppConfig.instanceId + '-game-over-modal');
                 if (modal) modal.style.display = 'flex';
             }
         }
 
         // Visual Sync for Defender Emoji based on Door position
-        const defender = document.getElementById('defender');
         if (defender) {
-            const doorRightPx = doorObj.position.x + 10; 
-            const doorTopPx = doorY - 55; // Sit on the exact logical unit
-            defender.style.transform = `translate(${doorRightPx}px, ${doorTopPx}px)`;
+            const defenderOffsetX = AppConfig.physics.defenderOffsetX || 0;
+            const doorRightPx = doorObj.position.x + 10 + defenderOffsetX; 
+            const platformThick = AppConfig.physics.platformThickness || 10;
+            const floorTopEdge = platformY - platformThick / 2;
+            
+            // Pin the dynamically measured BOTTOM of the emoji directly onto the TOP edge of the floor platform
+            const defenderTopPx = floorTopEdge - defenderHeight;
+            defender.style.transform = `translate(${doorRightPx}px, ${defenderTopPx}px)`;
         }
 
         // Win Condition logic
-        let activeBalls = 0;
         Composite.allBodies(engine.world).forEach(body => {
-            if (body.label === 'ball') activeBalls++;
-            
             // Clean up bodies that fall out of bounds
             if (body.position.y > canvasH + 100) {
+                if (body.label === 'ball' && !winTimerStarted && !isGameOver && !isGameClear) {
+                    winTimerStarted = true;
+                    const popDelay = AppConfig.physics.winPopupDelayMs || 5000;
+                    setTimeout(() => {
+                        if (!isGameOver) {
+                            isGameClear = true;
+                            const clearModal = document.getElementById(AppConfig.instanceId + '-game-clear-modal');
+                            if (clearModal) clearModal.style.display = 'flex';
+                        }
+                    }, popDelay);
+                }
                 World.remove(engine.world, body);
             }
         });
-
-        if (ballsSpawned >= TOTAL_BALLS && activeBalls === 0 && !isGameOver && !isGameClear) {
-            isGameClear = true;
-            const clearModal = document.getElementById('game-clear-modal');
-            if (clearModal) clearModal.style.display = 'flex';
-        }
     });
 }
 
 export function loadLevel(levelName) {
     if (!engine) return;
-    const levelData = levels[levelName];
+    const levelData = AppConfig.levels[levelName];
     if (!levelData) return;
 
     World.clear(engine.world);
     Engine.clear(engine);
 
     // Add visual funnel scaling to 1:1
-    const sX = canvasW / 500;
+    const sX = canvasW / AppConfig.physics.canvasW;
     levelData.forEach(wall => {
         const staticBody = Bodies.rectangle(wall.x * sX, wall.y, wall.width * sX, wall.height, {
             isStatic: true,
@@ -181,35 +198,53 @@ export function loadLevel(levelName) {
 
     const baselineX = canvasW * 0.5;
     let boardTopPx = canvasH * 0.5;
-    const board = document.getElementById('game-board');
-    if (board && board.offsetHeight > 0) {
-        boardTopPx = board.getBoundingClientRect().top;
+    const boardC = document.getElementById('board-container');
+    if (boardC) {
+        boardTopPx = boardC.offsetTop;
     }
     
-    // Create the standing platform exactly on top of the puzzle roof
+    // Configurable Floor Platform
     const platformW = canvasW; 
-    const platformX = baselineX + platformW / 2; // stretches infinitely to the right
-    const platformY = boardTopPx - 5; // 10px high, hugs exactly the roof
-    floorPlatform = Bodies.rectangle(platformX, platformY, platformW, 10, {
+    const platformX = baselineX + platformW / 2;
+    const platformY = boardTopPx + AppConfig.physics.platformOffsetY;
+    const platformThick = AppConfig.physics.platformThickness;
+    
+    floorPlatform = Bodies.rectangle(platformX, platformY, platformW, platformThick, {
         isStatic: true,
         render: { fillStyle: '#ffaa00' } // Matching the wall aesthetics
     });
 
-    const doorY = boardTopPx - 60; // 50px (half door) + 10px (platform thickness)
+    const doorY = boardTopPx + AppConfig.physics.defenderOffsetY;
     
     doorObj = Bodies.rectangle(baselineX, doorY, 20, 100, {
         isStatic: false,
-        mass: 1000, // Significantly heavier to act as an anchor against stacking balls
-        frictionAir: 0.1,
-        inertia: Infinity, // Prevents spinning!
+        mass: AppConfig.physics.doorMass,
+        frictionAir: AppConfig.physics.doorFrictionAir,
+        inertia: AppConfig.physics.doorInertia || Infinity,
         render: { fillStyle: '#a30000' }
     });
 
-    World.add(engine.world, [doorObj, floorPlatform]);
+    // Generate strict side walls for the fixed mobile canvas
+    const sideWallWidth = AppConfig.physics.sideWallWidth || 100;
+    const sideWallColor = AppConfig.physics.sideWallColor || '#ffaa00';
+    const sideWallVisible = AppConfig.physics.sideWallVisible !== false;
+    const sideWallOffset = AppConfig.physics.sideWallOffsetX || 15; // Shift inward so it aligns on screen
+    
+    const leftWall = Bodies.rectangle(0 - sideWallWidth/2 + sideWallOffset, canvasH/2, sideWallWidth, canvasH*2, { 
+        isStatic: true, 
+        render: { fillStyle: sideWallColor, visible: sideWallVisible } 
+    });
+    const rightWall = Bodies.rectangle(canvasW + sideWallWidth/2 - sideWallOffset, canvasH/2, sideWallWidth, canvasH*2, { 
+        isStatic: true, 
+        render: { fillStyle: sideWallColor, visible: sideWallVisible } 
+    });
+
+    World.add(engine.world, [doorObj, floorPlatform, leftWall, rightWall]);
     balls = [];
     isGameOver = false;
     isGameClear = false;
     ballsSpawned = 0;
+    winTimerStarted = false;
 }
 
 export function createPuzzleBlock(id, x, y, width, height) {
@@ -255,26 +290,26 @@ export function createBall(x, y) {
 
     ballsSpawned++;
 
-    const scale = (canvasW / 500);
+    const scale = (canvasW / AppConfig.physics.canvasW);
     
     // Slight randomization sizes
-    if (Math.random() < 0.3) {
-        const ball = Bodies.circle(x, y, scale * 6, { 
-            restitution: 0.2, 
-            density: 0.1, 
+    if (Math.random() < AppConfig.physics.smallBallChance) {
+        const ball = Bodies.circle(x, y, scale * AppConfig.physics.smallBallScale, { 
+            restitution: AppConfig.physics.smallBallRestitution, 
+            density: AppConfig.physics.smallBallDensity, 
             label: 'ball',
             render: { fillStyle: '#ffeb3b', lineWidth: 1, strokeStyle: '#000' }
         });
-        Body.setVelocity(ball, {x: 0, y: 10});
+        Body.setVelocity(ball, {x: 0, y: AppConfig.physics.smallBallVeloY});
         World.add(engine.world, ball);
     } else {
-        const ball = Bodies.circle(x, y, scale * 10, {
-            restitution: 0.2,
-            density: 0.15,
+        const ball = Bodies.circle(x, y, scale * AppConfig.physics.largeBallScale, {
+            restitution: AppConfig.physics.largeBallRestitution,
+            density: AppConfig.physics.largeBallDensity,
             label: 'ball',
             render: { fillStyle: ['#4287f5', '#f54242', '#42f566', '#f5d142'][Math.floor(Math.random()*4)], lineWidth: 1, strokeStyle: '#000' }
         });
-        Body.setVelocity(ball, {x: 0, y: 10});
+        Body.setVelocity(ball, {x: 0, y: AppConfig.physics.largeBallVeloY});
         World.add(engine.world, ball);
     }
 }
